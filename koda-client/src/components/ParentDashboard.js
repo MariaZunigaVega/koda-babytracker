@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Bell, ClipboardList, User, Home, 
   PlusSquare, BarChart2, MessageCircle, Settings,
@@ -8,8 +8,31 @@ import '../App.css';
 
 const ParentDashboard = () => {
   //placeholder for now, basically empty
-  const [activities] = useState([]); 
-  //^ same thing here
+  const [activities, setActivities] = useState({ feedings: [], sleeps: [], diapers: [] }); 
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/activities')
+      .then(res => res.json())
+      .then(data => {
+        setActivities(data);
+        setLoading(false);
+      });
+  }, []);
+
+  const addActivity = async (type, details) => {
+    const res = fetch(`http://localhost:5000/api/${type}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(details)
+    });
+    const newLog = await res.json();
+
+    setActivities(prev => ({ 
+      ...prev, ['${type}s']: [newLog, ...prev['${type}s']] 
+    }));
+  };
+
   const [caregivers] = useState([]);
 
   return (
@@ -31,10 +54,17 @@ const ParentDashboard = () => {
           <ClipboardList size={24} strokeWidth={2} />
           <span>todays activities</span>
         </div>
-
-        <p className="empty-msg-light">No activities yet. Tap the + to get started!</p>
+        
+        <div className="activities-list">
+          {loading ? <p>Loading...</p> : (
+            <>
+              {activities.feedings.map(f => <div key={f._id}>🍼Fed {f.amount}oz</div>)}
+              {activities.sleeps.map(s => <div key={s._id}>😴 Slept for {s.duration} mins</div>)}
+              {activities.diapers.map(d => <div key={d._id}>💩 Diaper: {d.type}</div>)}
+            </>
+          )}
       </div>
-
+      </div>
       <div className="glass-card">
         <div className="card-header">
           <User size={24} strokeWidth={2} />
