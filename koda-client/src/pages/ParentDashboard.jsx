@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { 
-  Bell, ClipboardList, User, Home, 
+import {
+  Bell, ClipboardList, User, Home,
   PlusSquare, BarChart2, MessageCircle, Settings,
-  ChevronDown 
-} from 'lucide-react'; 
+  ChevronDown
+} from 'lucide-react';
 import '../App.css';
 
 const ParentDashboard = () => {
@@ -19,21 +19,43 @@ const ParentDashboard = () => {
     const fetchData = async () => {
       try {
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-        
-        // Fetching both activities and caregivers in parallel
-        const [actRes, careRes] = await Promise.all([
-          axios.get(`${apiUrl}/api/activities`),
-          //axios.get(`${apiUrl}/api/auth/caregivers`) Adjust path based on team routes
-        ]);
 
-        setActivities(actRes.data);
-        setCaregivers(careRes.data);
+        // Fetching activities for now.
+        // Caregiver request can be added back once that route is available.
+        const actRes = await axios.get(`${apiUrl}/api/activities`);
+        // const careRes = await axios.get(`${apiUrl}/api/auth/caregivers`);
+
+        const { feedings = [], sleeps = [], diapers = [] } = actRes.data;
+
+        const combinedActivities = [
+          ...feedings.map((item) => ({
+            type: 'feeding',
+            value: `${item.type || 'feeding'}${item.amount ? ` - ${item.amount}` : ''}${item.side && item.side !== 'N/A' ? ` (${item.side})` : ''}`,
+            time: item.timestamp || item.time,
+          })),
+
+          ...sleeps.map((item) => ({
+            type: 'sleep',
+            value: `${item.startTime || ''} - ${item.endTime || ''}${item.quality ? ` (${item.quality})` : ''}`,
+            time: item.timestamp || item.startTime,
+          })),
+
+          ...diapers.map((item) => ({
+            type: 'diaper',
+            value: item.type || 'diaper change',
+            time: item.timestamp || item.time,
+          })),
+        ];
+
+        setActivities(combinedActivities);
+        // setCaregivers(careRes.data);
         setLoading(false);
       } catch (err) {
         console.error("Link to backend failed:", err);
         setLoading(false);
       }
     };
+
     fetchData();
   }, []);
 
@@ -55,11 +77,11 @@ const ParentDashboard = () => {
 
   return (
     <div className="dashboard-container" style={backgroundStyle}>
-      
+
       {/* FULL-WIDTH GLASS HEADER */}
       <header className="dashboard-header">
         <img src="/koda-logo.png" alt="Koda" className="koda-logo" />
-        
+
         <button className="name-dropdown-btn" onClick={() => console.log("Open Child Switcher")}>
           Gracie <ChevronDown size={20} strokeWidth={2.5} />
         </button>
@@ -73,7 +95,7 @@ const ParentDashboard = () => {
           <ClipboardList size={24} strokeWidth={2} />
           <span>todays activities</span>
         </div>
-        
+
         {activities.length > 0 ? (
           <div className="activity-list">
             {activities.slice(0, 3).map((act, index) => (
@@ -93,7 +115,7 @@ const ParentDashboard = () => {
           <User size={24} strokeWidth={2} />
           <span>caregivers</span>
         </div>
-        
+
         {caregivers.length > 0 ? (
           <div className="caregiver-list">
             {caregivers.map((cg, index) => (
@@ -106,27 +128,27 @@ const ParentDashboard = () => {
       </div>
 
       {/* KODA BEAR */}
-      <img 
-        src="/bear-character.png" 
-        alt="Koda Bear" 
-        className="bear-character" 
+      <img
+        src="/bear-character.png"
+        alt="Koda Bear"
+        className="bear-character"
       />
 
       {/* BOTTOM NAVIGATION */}
       <nav className="bottom-nav">
-        <Home size={28} strokeWidth={1.5} className="nav-icon" onClick={() => navigate('/dashboard')} />
-        
+        <Home size={28} strokeWidth={1.5} className="nav-icon" onClick={() => navigate('/ParentDashboard')} />
+
         {/* The Add Button - Links to activity logging */}
-        <PlusSquare 
-          size={36} 
-          strokeWidth={1.5} 
-          className="nav-icon plus-btn" 
-          onClick={() => navigate('/add-activity')} 
+        <PlusSquare
+          size={36}
+          strokeWidth={1.5}
+          className="nav-icon plus-btn"
+          onClick={() => navigate('/add-activity')}
         />
-        
+
         <BarChart2 size={28} strokeWidth={1.5} className="nav-icon" onClick={() => navigate('/stats')} />
         <MessageCircle size={28} strokeWidth={1.5} className="nav-icon" onClick={() => navigate('/chat')} />
-        <Settings size={28} strokeWidth={1.5} className="nav-icon" onClick={() => navigate('/settings')} />
+        <Settings size={28} strokeWidth={.5} className="nav-icon" onClick={() => navigate('/settings')} />
       </nav>
     </div>
   );
