@@ -11,9 +11,38 @@ const ChildRegistration = () => {
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!name || !dob) return;
-    navigate("/parentDashboard");
+
+    try {
+      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`${API_URL}/api/children`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-auth-token": token,
+        },
+        body: JSON.stringify({
+          name,
+          dob,
+          avatar,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error(data);
+        return;
+      }
+
+      localStorage.setItem("selectedChild", JSON.stringify(data));
+      navigate("/parentDashboard");
+    } catch (err) {
+      console.error("Could not create child profile:", err);
+    }
   };
 
   return (

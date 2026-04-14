@@ -21,8 +21,11 @@ const Activities = () => {
 
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const childName = JSON.parse(localStorage.getItem("selectedChild"))?.name || "Gracie";
+      console.log("SELECTED CHILD:", childName);
 
       if (type === 'sleep') {
+        console.log("SENDING SLEEP:", { childName, startTime, endTime, quality });
         const today = new Date().toISOString().split('T')[0];
 
         const sleepStart = new Date(`${today}T${startTime}`);
@@ -31,6 +34,7 @@ const Activities = () => {
         const duration = Math.round((sleepEnd - sleepStart) / (1000 * 60));
 
         await axios.post(`${apiUrl}/api/sleep`, {
+          childName,
           startTime: sleepStart,
           endTime: sleepEnd,
           duration,
@@ -39,13 +43,16 @@ const Activities = () => {
         });
       } else if (type === 'feeding') {
         await axios.post(`${apiUrl}/api/feeding`, {
+          childName,
           type: feedingType,
           amount: feedingAmount ? Number(feedingAmount) : undefined,
           side: feedingSide || 'N/A',
           timestamp: new Date(),
         });
+
       } else if (type === 'diaper') {
         await axios.post(`${apiUrl}/api/diaper`, {
+          childName,
           type: diaperType,
           timestamp: new Date(),
         });
@@ -92,9 +99,9 @@ const Activities = () => {
               value={type}
               onChange={(e) => setType(e.target.value)}
             >
-              <option value="feeding">🍼 feeding</option>
-              <option value="sleep">😴 sleep</option>
-              <option value="diaper">🧷 diaper</option>
+              <option value="feeding">🍼 Feeding</option>
+              <option value="sleep">😴 Sleep</option>
+              <option value="diaper">🧷 Diaper</option>
             </select>
           </div>
         </div>
@@ -228,7 +235,7 @@ const Activities = () => {
         </button>
 
       </form>
-      {type !== 'sleep' && type !== 'feeding' && (
+      {type !== 'sleep' && type !== 'feeding' && type !== 'diaper' && (
         <img src="/bear-character.png" alt="Koda Bear" className="bear-character" />
       )}
     </div>

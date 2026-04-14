@@ -246,3 +246,10 @@ html, body {
   display: flex;
   flex-direction: column;
 }
+
+.activity-list {
+  max-height: 180px;
+  overflow-y: auto;
+  width: 100%;
+  padding-right: 6px;
+}

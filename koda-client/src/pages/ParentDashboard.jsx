@@ -13,37 +13,51 @@ const ParentDashboard = () => {
   const [activities, setActivities] = useState([]);
   const [caregivers, setCaregivers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedChild, setSelectedChild] = useState(null);
 
   // 1. Fetch data from Maria's Backend API
   useEffect(() => {
+    const savedChild = localStorage.getItem("selectedChild");
+    if (savedChild) {
+      setSelectedChild(JSON.parse(savedChild));
+    }
+
     const fetchData = async () => {
       try {
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
         // Fetching activities for now.
         // Caregiver request can be added back once that route is available.
-        const actRes = await axios.get(`${apiUrl}/api/activities`);
+        const childName = JSON.parse(localStorage.getItem("selectedChild"))?.name || "Gracie";
+        const actRes = await axios.get(`${apiUrl}/api/activities?childName=${encodeURIComponent(childName)}`);
+        console.log("ACTIVITY RESPONSE:", actRes.data);
         // const careRes = await axios.get(`${apiUrl}/api/auth/caregivers`);
 
         const { feedings = [], sleeps = [], diapers = [] } = actRes.data;
 
+        const formatTime = (value) => {
+          if (!value) return '';
+          return new Date(value).toLocaleTimeString([], {
+            hour: 'numeric',
+            minute: '2-digit',
+          });
+        };
+
         const combinedActivities = [
           ...feedings.map((item) => ({
             type: 'feeding',
-            value: `${item.type || 'feeding'}${item.amount ? ` - ${item.amount}` : ''}${item.side && item.side !== 'N/A' ? ` (${item.side})` : ''}`,
-            time: item.timestamp || item.time,
+            value: `${item.type || 'feeding'}${item.amount ? ` - ${item.amount} oz` : ''}${item.side && item.side !== 'N/A' ? ` (${item.side})` : ''}`,
+            time: formatTime(item.timestamp),
           })),
-
           ...sleeps.map((item) => ({
             type: 'sleep',
-            value: `${item.startTime || ''} - ${item.endTime || ''}${item.quality ? ` (${item.quality})` : ''}`,
-            time: item.timestamp || item.startTime,
+            value: `${formatTime(item.startTime)} - ${formatTime(item.endTime)}${item.quality ? ` (${item.quality})` : ''}`,
+            time: '',
           })),
-
           ...diapers.map((item) => ({
             type: 'diaper',
             value: item.type || 'diaper change',
-            time: item.timestamp || item.time,
+            time: formatTime(item.timestamp),
           })),
         ];
 
@@ -83,7 +97,7 @@ const ParentDashboard = () => {
         <img src="/koda-logo.png" alt="Koda" className="koda-logo" />
 
         <button className="name-dropdown-btn" onClick={() => console.log("Open Child Switcher")}>
-          Gracie <ChevronDown size={20} strokeWidth={2.5} />
+          {selectedChild?.name || "Gracie"} <ChevronDown size={20} strokeWidth={2.5} />
         </button>
 
         <Bell size={28} strokeWidth={1.5} className="nav-icon" />
@@ -98,9 +112,9 @@ const ParentDashboard = () => {
 
         {activities.length > 0 ? (
           <div className="activity-list">
-            {activities.slice(0, 3).map((act, index) => (
+            {activities.map((act, index) => (
               <p key={index} className="empty-msg-light">
-                <strong>{act.type}:</strong> {act.value} at {act.time}
+                <strong>{act.type}:</strong> {act.value}{act.time ? ` at ${act.time}` : ''}
               </p>
             ))}
           </div>

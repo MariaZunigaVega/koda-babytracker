@@ -3,6 +3,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const childRoutes = require("./routes/children");
 
 const activitiesRouter = require('./routes/activities'); //mdz0019 import activities routes
 
@@ -22,7 +23,7 @@ app.get('/', (req, res) => res.send("Koda API is Running..."));
 // Define routes
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
-
+app.use("/api/children", childRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));
 

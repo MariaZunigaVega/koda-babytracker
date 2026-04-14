@@ -41,9 +41,13 @@ router.post('/diaper', async (req, res) => {
 //GET all activities
 router.get('/activities', async (req, res) => {
     try {
-        const feedings = await Feeding.find().sort({ timestamp: -1 });
-        const sleeps = await Sleep.find().sort({ timestamp: -1 });
-        const diapers = await Diaper.find().sort({ timestamp: -1 });
+        const childName = req.query.childName;
+        const filter = childName ? { childName } : {};
+
+        const feedings = await Feeding.find(filter).sort({ timestamp: -1 });
+        const sleeps = await Sleep.find(filter).sort({ timestamp: -1 });
+        const diapers = await Diaper.find(filter).sort({ timestamp: -1 });
+
         res.json({ feedings, sleeps, diapers });
     } catch (err) {
         res.status(500).json({ error: err.message });

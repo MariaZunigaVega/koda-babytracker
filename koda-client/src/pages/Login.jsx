@@ -35,6 +35,21 @@ const Login = () => {
       }
 
       localStorage.setItem("token", data.token);
+
+      const childRes = await fetch(`${API_URL}/api/children`, {
+        headers: {
+          "x-auth-token": data.token,
+        },
+      });
+
+      const children = await childRes.json();
+
+      if (childRes.ok && Array.isArray(children) && children.length > 0) {
+        localStorage.setItem("selectedChild", JSON.stringify(children[0]));
+      } else {
+        localStorage.removeItem("selectedChild");
+      }
+
       navigate("/parentDashboard");
     } catch (err) {
       setError("connection failed.");
