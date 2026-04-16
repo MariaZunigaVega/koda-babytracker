@@ -72,7 +72,7 @@ const Login = () => {
 
       <div className="setup-card">
         <h1 className="setup-title">Welcome Back</h1>
-        <p className="setup-sub">Log in to check on your little one 🐻</p>
+        <p className="setup-sub">Please Enter Your Details</p>
 
         <div className="setup-field">
           <label>Email</label>
@@ -101,7 +101,7 @@ const Login = () => {
         </button>
 
         <p className="setup-footer">
-          New to Koda? <a onClick={() => navigate("/register")}>Create account</a>
+          Don't have an account? <a onClick={() => navigate("/registering")}>Sign Up</a>
         </p>
       </div>
     </div>
