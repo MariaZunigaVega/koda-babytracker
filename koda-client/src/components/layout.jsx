@@ -75,7 +75,7 @@ const Layout = ({ children }) => {
           size={32}
           strokeWidth={2}
           className="nav-icon"
-          onClick={() => navigate("/stats")}
+          onClick={() => navigate("/history")}
         />
         <MessageCircle
           size={32}

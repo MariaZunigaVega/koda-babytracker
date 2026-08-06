@@ -10,6 +10,7 @@ import ChildRegistration from './pages/childRegistration';
 import Activities from './pages/Activities';
 import ResetPassword from "./pages/ResetPassword";
 import BabySettings from './pages/babySettings';
+import HistoryPage from './pages/HistoryPage';
 import Layout from './components/layout';
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/add-activity" element={<Activities />} />
         <Route path="/ParentDashboard" element={<Layout><ParentDashboard /></Layout>} />
         <Route path="/babysettings" element={<Layout><BabySettings /></Layout>} />
+        <Route path="/history" element={<Layout><HistoryPage /></Layout>} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Routes>

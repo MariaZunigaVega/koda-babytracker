@@ -153,6 +153,14 @@ const ParentDashboard = () => {
         )}
       </div>
 
+      <button
+        type="button"
+        className="history-launch-btn"
+        onClick={() => navigate('/history')}
+      >
+        view history & export pdf
+      </button>
+
       {!loading && (
         <div style={{ width: "280px", height: "280px", position: "absolute", bottom: "30px", left: "-68px" }}>
           <Canvas camera={{ position: [0, 0, 3], fov: 50 }}>

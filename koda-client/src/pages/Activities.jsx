@@ -67,7 +67,7 @@ const Activities = () => {
   };
 
   const backgroundStyle = {
-    backgroundImage: `url('/lightmode.jpg')`,
+    backgroundImage: `url(${process.env.PUBLIC_URL + "/lightmode.jpg"})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     minHeight: '100vh',
