@@ -4,7 +4,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const childRoutes = require("./routes/children");
-const reportsRouter = require('./routes/reports'); // reports and PDF generation
 
 const activitiesRouter = require('./routes/activities'); //mdz0019 import activities routes
 
@@ -13,7 +12,6 @@ app.use(express.json());
 app.use(cors());
 
 app.use('/api', activitiesRouter); //mdz0019 use activities routes
-app.use('/api/reports', reportsRouter); // report endpoints (PDF generation)
 
 // Connect to MongoDB using the secret variable
 mongoose.connect(process.env.MONGO_URI)

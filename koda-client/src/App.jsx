@@ -9,8 +9,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ChildRegistration from './pages/childRegistration';
 import Activities from './pages/Activities';
 import ResetPassword from "./pages/ResetPassword";
-import BabySettings from './pages/babysettings';
-import LogHistory from './pages/LogHistory';
+import BabySettings from './pages/babySettings';
 import Layout from './components/layout';
 function App() {
   return (
@@ -23,7 +22,6 @@ function App() {
         <Route path="/childRegistration" element={<ChildRegistration />} />
         <Route path="/add-activity" element={<Activities />} />
         <Route path="/ParentDashboard" element={<Layout><ParentDashboard /></Layout>} />
-        <Route path="/log-history" element={<Layout><LogHistory /></Layout>} />
         <Route path="/babysettings" element={<Layout><BabySettings /></Layout>} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
