@@ -5,7 +5,8 @@
   font-family: 'Londrina Solid', cursive;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   width: 100%;
@@ -56,18 +57,18 @@ html, body {
   pointer-events: none;
 }
 
-.frosted-surface > *,
-.dashboard-header > *,
-.bottom-nav > *,
-.settings-dropdown > *,
-.glass-card > *,
-.activity-menu-btn > *,
-.history-card > *,
-.account-settings-card > *,
-.profile-edit-button > *,
-.history-launch-btn > *,
-.save-btn-card > *,
-.export-btn > * {
+.frosted-surface>*,
+.dashboard-header>*,
+.bottom-nav>*,
+.settings-dropdown>*,
+.glass-card>*,
+.activity-menu-btn>*,
+.history-card>*,
+.account-settings-card>*,
+.profile-edit-button>*,
+.history-launch-btn>*,
+.save-btn-card>*,
+.export-btn>* {
   position: relative;
   z-index: 1;
 }
@@ -315,6 +316,164 @@ html, body {
   color: rgba(0, 0, 0, 0.4);
 }
 
+/* Activity Log Selection Page- included icon tile layout for feeding, sleep, diaper, playtime, and mood */
+.activity-picker-card {
+  padding: 24px;
+}
+
+.activity-picker-header {
+  margin-bottom: 8px;
+}
+
+.activity-picker-subtitle {
+  font-size: 17px;
+  opacity: 0.75;
+  margin-bottom: 20px;
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.activity-tile {
+  min-height: 110px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 22px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  color: #1f1f1f;
+  cursor: pointer;
+  font-family: 'Londrina Solid', cursive;
+  font-size: 20px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(8px);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.activity-tile:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.activity-tile span {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.activity-tile svg:last-child {
+  align-self: flex-end;
+}
+
+.activity-tile-wide {
+  grid-column: 1 / -1;
+  min-height: 90px;
+}
+
+/* Activity Log Forms - changed styling for Feeding, Sleep, and Diaper entry screens */
+
+.log-form-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.log-form-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 26px;
+  margin-bottom: 2px;
+}
+
+.log-form-subtitle {
+  font-size: 16px;
+  opacity: 0.7;
+  margin-bottom: 22px;
+  margin-left: 36px;
+}
+
+.log-field-group {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.log-label {
+  font-size: 18px;
+  margin-left: 3px;
+  color: #1f1f1f;
+}
+
+.log-option-row {
+  width: 100%;
+  display: flex;
+  gap: 8px;
+}
+
+.log-option-btn {
+  flex: 1;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 15px;
+  padding: 11px 8px;
+  background: rgba(255, 255, 255, 0.48);
+  color: #1f1f1f;
+  font-family: 'Londrina Solid', cursive;
+  font-size: 17px;
+  cursor: pointer;
+  box-shadow: 0 5px 12px rgba(15, 23, 42, 0.06);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.log-option-btn:hover {
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.log-option-btn:active {
+  transform: scale(0.97);
+}
+
+.log-option-btn.selected {
+  background: rgba(255, 255, 255, 0.85);
+  border: 2px solid rgba(31, 31, 31, 0.55);
+}
+
+.log-input-wrapper {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 15px;
+  box-shadow: 0 5px 12px rgba(15, 23, 42, 0.06);
+}
+
+.log-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: 'Londrina Solid', cursive;
+  font-size: 17px;
+  color: #1f1f1f;
+}
+
+.log-input::placeholder {
+  color: rgba(31, 31, 31, 0.45);
+}
+
 /* Sleep form */
 .sleep-form-container {
   width: 100%;
@@ -392,14 +551,41 @@ html, body {
   opacity: 0;
 }
 
-.z1 { right: 0px; top: 0px; animation-delay: 0s; font-size: 0.8rem; }
-.z2 { right: -8px; top: -16px; animation-delay: 0.6s; font-size: 1rem; }
-.z3 { right: -16px; top: -30px; animation-delay: 1.2s; font-size: 1.2rem; }
+.z1 {
+  right: 0px;
+  top: 0px;
+  animation-delay: 0s;
+  font-size: 0.8rem;
+}
+
+.z2 {
+  right: -8px;
+  top: -16px;
+  animation-delay: 0.6s;
+  font-size: 1rem;
+}
+
+.z3 {
+  right: -16px;
+  top: -30px;
+  animation-delay: 1.2s;
+  font-size: 1.2rem;
+}
 
 @keyframes floatZ {
-  0% { opacity: 0; transform: translate(0, 0) scale(0.8); }
-  30% { opacity: 1; }
-  100% { opacity: 0; transform: translate(-8px, -20px) scale(1.1); }
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.8);
+  }
+
+  30% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-8px, -20px) scale(1.1);
+  }
 }
 
 /* Bubbles animation */
@@ -421,16 +607,50 @@ html, body {
   opacity: 0;
 }
 
-.b1 { width: 10px; height: 10px; left: 10px; animation-delay: 0s; }
-.b2 { width: 14px; height: 14px; left: 30px; animation-delay: 0.5s; }
-.b3 { width: 8px; height: 8px; left: 50px; animation-delay: 1s; }
-.b4 { width: 12px; height: 12px; left: 20px; animation-delay: 1.5s; }
+.b1 {
+  width: 10px;
+  height: 10px;
+  left: 10px;
+  animation-delay: 0s;
+}
+
+.b2 {
+  width: 14px;
+  height: 14px;
+  left: 30px;
+  animation-delay: 0.5s;
+}
+
+.b3 {
+  width: 8px;
+  height: 8px;
+  left: 50px;
+  animation-delay: 1s;
+}
+
+.b4 {
+  width: 12px;
+  height: 12px;
+  left: 20px;
+  animation-delay: 1.5s;
+}
 
 @keyframes floatBubble {
-  0% { opacity: 0; transform: translateY(0) scale(0.5); }
-  20% { opacity: 0.8; }
-  100% { opacity: 0; transform: translateY(-120px) scale(1); }
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.5);
+  }
+
+  20% {
+    opacity: 0.8;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-120px) scale(1);
+  }
 }
+
 .history-launch-btn {
   margin-top: 16px;
   border: none;
@@ -609,7 +829,7 @@ html, body {
   justify-content: center;
   font-size: 42px;
   flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 .profile-label {
@@ -740,9 +960,15 @@ html, body {
 }
 
 @media (max-width: 420px) {
-  .avatar-picker { grid-template-columns: repeat(3, 1fr); }
-  .profile-grid { grid-template-columns: 1fr; }
+  .avatar-picker {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
 }
+
 /* Baby Settings Page */
 
 .as-page {
@@ -760,10 +986,10 @@ html, body {
   display: flex;
   align-items: center;
   gap: 16px;
-  background: rgba(255,255,255,0.35);
+  background: rgba(255, 255, 255, 0.35);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  border: 1px solid rgba(255,255,255,0.5);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 32px;
   padding: 16px 20px;
   margin-bottom: 16px;
@@ -810,8 +1036,8 @@ html, body {
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.5);
-  background: rgba(255,255,255,0.4);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.4);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   display: flex;
@@ -830,33 +1056,32 @@ html, body {
   top: 110px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(
-    90deg, 
-    rgba(60, 200, 100, 0) 0%, 
-    rgba(60, 200, 100, 0.15) 20%, 
-    rgba(60, 200, 100, 0.15) 80%, 
-    rgba(60, 200, 100, 0) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(60, 200, 100, 0) 0%,
+      rgba(60, 200, 100, 0.15) 20%,
+      rgba(60, 200, 100, 0.15) 80%,
+      rgba(60, 200, 100, 0) 100%);
   padding: 12px 40px;
   display: flex;
   align-items: center;
   gap: 12px;
   font-family: 'Londrina Solid', cursive;
   font-size: 20px;
-  color: #1a6630; 
+  color: #1a6630;
   z-index: 2000;
-  pointer-events: none;  
+  pointer-events: none;
   animation: softFadeIn 0.6s ease-out forwards;
 }
 
 @keyframes softFadeIn {
-  0% { 
-    opacity: 0; 
+  0% {
+    opacity: 0;
     letter-spacing: 2px;
     filter: blur(4px);
   }
-  100% { 
-    opacity: 1; 
+
+  100% {
+    opacity: 1;
     letter-spacing: 0px;
     filter: blur(0px);
   }
@@ -887,13 +1112,14 @@ html, body {
 }
 
 .as-info-card {
-  background: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.3);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.45);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: 28px;
   padding: 22px 20px;
 }
+
 .as-info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -928,10 +1154,10 @@ html, body {
 }
 
 .as-field-group {
-  background: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.3);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.45);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: 28px;
   padding: 6px 4px;
   margin-bottom: 20px;
@@ -942,7 +1168,7 @@ html, body {
   display: flex;
   flex-direction: column;
   padding: 14px 18px;
-  border-bottom: 1px solid rgba(255,255,255,0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   cursor: text;
 }
 
@@ -986,8 +1212,8 @@ html, body {
 .as-avatar-opt {
   aspect-ratio: 1;
   border-radius: 16px;
-  border: 2px solid rgba(255,255,255,0.4);
-  background: rgba(255,255,255,0.3);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.3);
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   font-size: 28px;
@@ -1000,7 +1226,7 @@ html, body {
 
 .as-avatar-opt.active {
   border-color: #1f1d1a;
-  background: rgba(255,255,255,0.7);
+  background: rgba(255, 255, 255, 0.7);
   transform: scale(1.08);
 }
 
@@ -1020,7 +1246,7 @@ html, body {
   padding: 16px;
   border: none;
   border-radius: 22px;
-  background: rgba(31,29,26,0.85);
+  background: rgba(31, 29, 26, 0.85);
   color: #fff;
   font-family: 'Londrina Solid', cursive;
   font-size: 24px;
@@ -1032,11 +1258,12 @@ html, body {
   transform: scale(0.97);
   opacity: 0.9;
 }
+
 .as-edit-btn {
   position: absolute;
-  top: 15px;       
-  right: 15px;     
-  width: 32px;   
+  top: 15px;
+  right: 15px;
+  width: 32px;
   height: 32px;
   background: none;
   border-radius: 20%;
