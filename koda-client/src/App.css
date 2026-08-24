@@ -741,6 +741,44 @@ body {
   margin-top: 10px;
 }
 
+/* History Page - quick activity statistics and report charts */
+
+.quick-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.quick-stat-card {
+  min-height: 105px;
+  padding: 14px 10px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.quick-stat-card strong {
+  font-size: 27px;
+  font-weight: 400;
+}
+
+.quick-stat-card span {
+  font-size: 15px;
+  opacity: 0.8;
+}
+
+.history-chart {
+  width: 100%;
+  margin-top: 12px;
+}
+
 /* Account / Baby settings page */
 .account-settings-page {
   min-height: 100vh;
