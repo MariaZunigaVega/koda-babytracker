@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import "./setUp.css";
-
+import "../styling/setUp.css";
+const kodaLogo = "/assets/koda-logo.png";  
 const Welcome = () => {
   const navigate = useNavigate();
 
@@ -19,10 +19,10 @@ const Welcome = () => {
 
       {/* sparkles */}
 
-      <img src="/koda-logo.png" alt="Koda" className="setup-logo-x" />
+      <img src={kodaLogo} alt="Koda" className="setup-logo-x" onError={(e) => { e.target.style.visibility = "hidden"; }} />
 
       <div className="setup-card">
-        <h1 className="setup-title">Welcome to KODA</h1>
+        <h1 className="setup-title">Welcome,</h1>
         <p className="setup-sub">Who will you be joining as?</p>
 
         <button

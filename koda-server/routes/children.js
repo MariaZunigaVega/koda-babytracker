@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const Child = require("../model/Child"); // change to ../models/Child if your folder is models
+const Child = require("../models/Child");
 
 const authMiddleware = (req, res, next) => {
   const token = req.header("x-auth-token");

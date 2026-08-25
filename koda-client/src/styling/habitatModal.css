@@ -1,0 +1,154 @@
+@import url("https://fonts.googleapis.com/css2?family=Londrina+Solid:wght@100;300;400;900&display=swap");
+
+.hm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(44, 44, 44, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+  animation: hm-fade-in 0.15s ease;
+}
+
+@keyframes hm-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.hm-panel {
+  width: 100%;
+  max-width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #fffdf7;
+  border-radius: 24px 24px 0 0;
+  padding: 20px;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.2);
+  animation: hm-slide-up 0.2s ease;
+}
+
+@keyframes hm-slide-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.hm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  color: #2c2c2c;
+}
+
+.hm-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hm-title {
+  font-family: "Londrina Solid", cursive;
+  font-size: 20px;
+  font-weight: 400;
+  margin: 0;
+  letter-spacing: 0.3px;
+  text-transform: lowercase;
+}
+
+.hm-close-btn {
+  background: none;
+  border: none;
+  color: #2c2c2c;
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  transition: opacity 0.15s;
+}
+
+.hm-close-btn:hover {
+  opacity: 1;
+}
+
+.hm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hm-list-item {
+  font-family: "Londrina Solid", cursive;
+  font-size: 16px;
+  font-weight: 300;
+  color: #2c2c2c;
+  background: #f5efe0;
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin: 0;
+}
+
+.hm-empty {
+  font-family: "Londrina Solid", cursive;
+  font-size: 14px;
+  font-weight: 300;
+  color: #2c2c2c;
+  opacity: 0.6;
+  text-align: center;
+  padding: 12px 0;
+  margin: 0;
+}
+
+.hm-action-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  background: #8faf6f;
+  color: #fff;
+  border: none;
+  font-family: "Londrina Solid", cursive;
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition:
+    background 0.15s,
+    transform 0.1s;
+}
+
+.hm-action-btn:hover {
+  background: #7a9b5c;
+}
+
+.hm-action-btn:active {
+  transform: scale(0.97);
+}
+
+.hm-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hm-action-btn.secondary {
+  background: #fffdf7;
+  color: #2c2c2c;
+  border: 1.5px solid #d9cfc0;
+}
+
+.hm-action-btn.secondary:hover {
+  background: #f0ead9;
+}

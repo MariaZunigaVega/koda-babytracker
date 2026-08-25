@@ -1,55 +1,81 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import { ClipboardList, User } from "lucide-react";
-import "../App.css";
+import "../styling/App.css";
+import "../styling/habitats.css";
 import { getSelectedChildForUser } from "../utils/authStorage";
 import { API_URL } from "../config";
+import { getAvatarById, DEFAULT_MODEL } from "../constants/avatars";
+import FoxHabitat3D from "../components/habitats/FoxHabitat3D";
+import FrogHabitat3D from "../components/habitats/FrogHabitat3D";
+import BunnyHabitat3D from "../components/habitats/BunnyHabitat3D";
+import ActivitiesModal from "../components/activitiesModal";
+import CaregiversModal from "../components/caregiversModal";
 
-function ActivityModel({ model }) {
-  const group = useRef();
-  const { scene } = useGLTF(model);
-useFrame(({ clock }) => {
-  const t = clock.getElapsedTime();
-  group.current.position.y = Math.sin(t * 2) * 0.06;  // gentle bounce
-});
+useGLTF.preload(DEFAULT_MODEL);
+useGLTF.preload("/models/feeding.glb");
+useGLTF.preload("/models/sleep.glb");
 
+const CornerButton = ({ icon: Icon, onClick, style }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    style={{
+      position: "absolute",
+      width: "44px",
+      height: "44px",
+      borderRadius: "50%",
+      border: "none",
+      background: "rgba(255, 253, 247, 0.8)",
+      backdropFilter: "blur(8px)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      boxShadow: "0 4px 14px rgba(15, 23, 42, 0.2)",
+      cursor: "pointer",
+      zIndex: 5,
+      ...style,
+    }}
+  >
+    <Icon size={20} strokeWidth={2} color="#2c2c2c" />
+  </button>
+);
 
-  return (
-    <primitive ref={group} object={scene} scale={0.55} position={[0, -0.5, 0]} rotation={[0, -0.1, 0]} />
-  );
-}
-const backgroundStyle = {
-  backgroundImage: `url(${process.env.PUBLIC_URL + "/lightmode.jpg"})`,
-  backgroundSize: "cover",
-  backgroundPosition: "center",
-  backgroundAttachment: "fixed",
-  height: "100vh",
-  width: "100vw",
-  position: "relative",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  paddingTop: "120px",  
-  overflowY: "auto",
-  overflowX: "hidden",
+const CornerSlot = ({ icon, top, right, isOpen, onToggle, children }) => {
+  if (!isOpen) {
+    return (
+      <CornerButton
+        icon={icon}
+        onClick={onToggle}
+        style={{ top: `${top}px`, right: `${right}px` }}
+      />
+    );
+  }
+  return children({ top: `${top}px`, right: `${right}px` });
 };
-useGLTF.preload("/bear.glb");
-useGLTF.preload("/feeding.glb");
-useGLTF.preload("/sleep.glb");
 
 const ParentDashboard = () => {
-  const navigate = useNavigate();
   const [activities, setActivities] = useState([]);
   const [caregivers, setCaregivers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [openPanel, setOpenPanel] = useState(null);
+
+  const selectedChild = getSelectedChildForUser();
+  const character = getAvatarById(selectedChild?.avatar);
+  const characterModel = character?.model || DEFAULT_MODEL;
+
+  const togglePanel = (name) =>
+    setOpenPanel((current) => (current === name ? null : name));
+
+  useEffect(() => {
+    useGLTF.preload(characterModel);
+  }, [characterModel]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const childName = getSelectedChildForUser()?.name || "Gracie";
+        const childName = selectedChild?.name || "Gracie";
         const actRes = await axios.get(`${API_URL}/api/activities?childName=${encodeURIComponent(childName)}`);
 
         const { feedings = [], sleeps = [], diapers = [] } = actRes.data;
@@ -93,101 +119,70 @@ const ParentDashboard = () => {
     };
 
     fetchData();
-  }, []);
-
-  const getActivityModel = () => {
-    if (activities.length === 0) return "/bear.glb";
-    const latest = activities[0];
-    if (latest.type === "feeding") return "/feeding.glb";
-    if (latest.type === "sleep") return "/sleep.glb";
-    return "/bear.glb";
-  };
+  }, [selectedChild?.name]);
 
   return (
-    <div className="dashboard-container" style={{
-      backgroundImage: `url(${process.env.PUBLIC_URL + "/lightmode.jpg"})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundAttachment: "fixed",
-      height: "100vh",
-      width: "100vw",
-      position: "relative",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      paddingTop: "120px",
-      overflowY: "auto",
-      overflowX: "hidden",
-    }}>
-      <div className="glass-card first-card">
-        <div className="card-header">
-          <ClipboardList size={24} strokeWidth={2} />
-          <span>todays activities</span>
-        </div>
-        {activities.length > 0 ? (
-          <div className="activity-list">
-            {activities.map((act, index) => (
-              <p key={index} className="empty-msg-light">
-                <strong>{act.type}:</strong> {act.value}{act.time ? ` at ${act.time}` : ""}
-              </p>
-            ))}
-          </div>
+    <div
+      className="dashboard-container"
+      style={{
+        height: "100vh",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <div style={{ position: "absolute", inset: 0 }}>
+        {character?.customHabitat === "fox" ? (
+          <FoxHabitat3D characterModel={characterModel} />
+        ) : character?.customHabitat === "frog" ? (
+          <FrogHabitat3D characterModel={characterModel} />
+        ) : character?.customHabitat === "bunny" ? (
+          <BunnyHabitat3D characterModel={characterModel} />
         ) : (
-          <p className="empty-msg-light">No activities yet. Tap the + to get started!</p>
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: `url(${process.env.PUBLIC_URL + "/lightmode.jpg"})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
         )}
       </div>
-
-      <div className="glass-card">
-        <div className="card-header">
-          <User size={24} strokeWidth={2} />
-          <span>caregivers</span>
-        </div>
-        {caregivers.length > 0 ? (
-          <div className="caregiver-list">
-            {caregivers.map((cg, index) => (
-              <p key={index} className="empty-msg-light">{cg.name}</p>
-            ))}
-          </div>
-        ) : (
-          <p className="empty-msg-light">No caregivers yet. Add a caregiver to share the load!</p>
-        )}
-      </div>
-
-      <button
-        type="button"
-        className="history-launch-btn"
-        onClick={() => navigate('/history')}
+      <CornerSlot
+        icon={ClipboardList}
+        top={100}
+        right={16}
+        isOpen={openPanel === "activities"}
+        onToggle={() => togglePanel("activities")}
       >
-        view history & export pdf
-      </button>
+        {(anchorStyle) => (
+          <ActivitiesModal
+            activities={activities}
+            onClose={() => setOpenPanel(null)}
+            variant="popover"
+            anchorStyle={anchorStyle}
+          />
+        )}
+      </CornerSlot>
 
-      {!loading && (
-        <div style={{ width: "280px", height: "280px", position: "absolute", bottom: "30px", left: "-68px" }}>
-          <Canvas camera={{ position: [0, 0, 3], fov: 50 }}>
-            <ambientLight intensity={2.5} />
-            <directionalLight position={[5, 5, 5]} intensity={0.5} />
-            <pointLight position={[10, 10, 10]} intensity={0.6} />
-            <ActivityModel model={getActivityModel()} />
-          </Canvas>
-
-          {activities[0]?.type === "sleep" && (
-            <div className="zzz-overlay">
-              <span className="zzz z1">Z</span>
-              <span className="zzz z2">Z</span>
-              <span className="zzz z3">Z</span>
-            </div>
-          )}
-
-          {activities[0]?.type === "feeding" && (
-            <div className="bubbles-overlay">
-              <span className="bubble b1" />
-              <span className="bubble b2" />
-              <span className="bubble b3" />
-              <span className="bubble b4" />
-            </div>
-          )}
-        </div>
-      )}
+      {/* caregivers corner slot */}
+      <CornerSlot
+        icon={User}
+        top={154}
+        right={16}
+        isOpen={openPanel === "caregivers"}
+        onToggle={() => togglePanel("caregivers")}
+      >
+        {(anchorStyle) => (
+          <CaregiversModal
+            caregivers={caregivers}
+            onClose={() => setOpenPanel(null)}
+            variant="popover"
+            anchorStyle={anchorStyle}
+          />
+        )}
+      </CornerSlot>
     </div>
   );
 };

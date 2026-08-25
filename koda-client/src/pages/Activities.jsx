@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ChevronDown, X, Save } from 'lucide-react';
-import '../App.css';
+import '../styling/App.css';
 import { getSelectedChildForUser } from '../utils/authStorage';
 import { API_URL } from "../config";
 
@@ -71,22 +71,23 @@ const Activities = () => {
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     minHeight: '100vh',
-    width: '100vw',
+    width: '100%',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    paddingTop: '80px'
+    paddingTop: '100px'
   };
 
   return (
-    <div className="dashboard-container" style={backgroundStyle}>
+    <div className="mobile-frame">
+      <div className="dashboard-container" style={backgroundStyle}>
 
       {/* Header with Close Button */}
       <header className="dashboard-header">
-        <img src="/koda-logo.png" alt="Koda" className="koda-logo" />
-        <h2 style={{ fontFamily: 'Londrina Solid', fontSize: '28px', margin: 0 }}>log activity</h2>
+        <img src="/koda-logo.png" alt="Koda" className="koda-logo" onError={(e) => { e.target.style.visibility = "hidden"; }} />
+        <h2 style={{ fontFamily: 'Londrina Solid', fontSize: '24px', margin: 0 }}>log activity</h2>
         <X
-          size={28}
+          size={26}
           className="nav-icon"
           onClick={() => {
             if (step === 2) {
@@ -298,6 +299,7 @@ const Activities = () => {
         )}
 
       </form>
+      </div>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { FileText, Download } from 'lucide-react';
-import '../App.css';
+import '../styling/App.css';
 import { getSelectedChildForUser } from '../utils/authStorage';
 import { API_URL } from '../config';
 

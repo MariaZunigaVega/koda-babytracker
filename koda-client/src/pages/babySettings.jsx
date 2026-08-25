@@ -1,43 +1,30 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PencilLine, Check, X } from "lucide-react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
-import "../App.css";
+import "../styling/App.css";
+import "../styling/habitats.css";
 import {
   getSelectedChildForUser,
   setSelectedChildForUser,
 } from "../utils/authStorage";
 import { API_URL } from "../config";
-
-const AVATARS = ["🐻", "🦊", "🐼", "🐨", "🐸", "🦁", "🐰", "🐮", "🦋"];
-
-function IdleBear() {
-  const group = useRef();
-  const { scene } = useGLTF("/bear.glb");
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime();
-    group.current.position.y = Math.sin(t * 2) * 0.06;
-  });
-  return (
-    <primitive
-      ref={group}
-      object={scene}
-      scale={1}
-      position={[-0.3, 0.1, 0]}
-      rotation={[0, 0, 0]}
-    />
-  );
-}
-
-useGLTF.preload("/bear.glb");
+import { AVATARS, getAvatarById, DEFAULT_MODEL } from "../constants/avatars";
+import { habitatTileStyle } from "../constants/habitatAssets";
+import { IdleCharacterModel, ModelErrorBoundary } from "../components/characterModel";
 
 const BabySettings = () => {
   const navigate = useNavigate();
   const [child, setChild] = useState(null);
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
-  const [avatar, setAvatar] = useState("🐻");
+  const [avatar, setAvatar] = useState("bear");
+  const characterModel = getAvatarById(avatar)?.model || DEFAULT_MODEL;
+
+  useEffect(() => {
+    useGLTF.preload(characterModel);
+  }, [characterModel]);
   const [weight, setWeight] = useState("");
   const [allergies, setAllergies] = useState("");
   const [other, setOther] = useState("");
@@ -51,7 +38,7 @@ const BabySettings = () => {
     setChild(profile);
     setName(profile.name || "");
     setDob(profile.dob || "");
-    setAvatar(profile.avatar || "🐻");
+    setAvatar(profile.avatar || "bear");
     setWeight(profile.weight || "");
     setAllergies(profile.allergies || "");
     setOther(profile.other || "");
@@ -139,6 +126,8 @@ const BabySettings = () => {
     }
   };
 
+  const selectedAvatar = getAvatarById(avatar);
+
   return (
     <div
       className="as-page"
@@ -159,8 +148,20 @@ const BabySettings = () => {
             {/* top card */}
             <div
               className="as-info-card"
-              style={{ position: "relative", marginBottom: "20px" }}
+              style={{ position: "relative", marginBottom: "20px", overflow: "hidden" }}
             >
+              {selectedAvatar && (
+                <div
+                  className={`habitat-ground ${selectedAvatar.habitatClass}`}
+                  style={{
+                    height: "130px",
+                    margin: "-20px -20px 12px -20px",
+                    position: "relative",
+                    ...habitatTileStyle(selectedAvatar.habitatClass),
+                  }}
+                >
+                </div>
+              )}
               <div
                 className="as-hero"
                 style={{
@@ -180,7 +181,9 @@ const BabySettings = () => {
                     <directionalLight position={[5, 5, 5]} intensity={0.5} />
                     <pointLight position={[10, 10, 10]} intensity={0.6} />
                     <React.Suspense fallback={null}>
-                      <IdleBear />
+                      <ModelErrorBoundary modelPath={characterModel}>
+                        <IdleCharacterModel modelPath={characterModel} />
+                      </ModelErrorBoundary>
                     </React.Suspense>
                   </Canvas>
                 </div>
@@ -189,7 +192,10 @@ const BabySettings = () => {
                   <h1 style={{ fontSize: "2.2rem", margin: "0" }}>
                     {name || "Gracie"}
                   </h1>
-                  <p style={{ fontSize: "1rem", opacity: 0.8 }}>{ageLabel}</p>
+                  <p style={{ fontSize: "1rem", opacity: 0.8 }}>
+                    {ageLabel}
+                    {selectedAvatar && ` · ${selectedAvatar.habitat}`}
+                  </p>
                 </div>
 
                 <button
@@ -303,14 +309,15 @@ const BabySettings = () => {
                   pick an avatar
                 </p>
                 <div className="as-avatar-grid">
-                  {AVATARS.map((opt) => (
+                  {AVATARS.map((character) => (
                     <button
-                      key={opt}
+                      key={character.id}
                       type="button"
-                      className={`as-avatar-opt${avatar === opt ? " active" : ""}`}
-                      onClick={() => setAvatar(opt)}
+                      className={`as-avatar-opt${avatar === character.id ? " active" : ""}`}
+                      onClick={() => setAvatar(character.id)}
+                      title={character.habitat}
                     >
-                      {opt}
+                      {character.habitat}
                     </button>
                   ))}
                 </div>

@@ -3,9 +3,9 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const PDFDocument = require('pdfkit');
-const Feeding = require('../model/feeding');
-const Sleep = require('../model/sleep');
-const Diaper = require('../model/diaper');
+const Feeding = require('../models/feeding');
+const Sleep = require('../models/sleep');
+const Diaper = require('../models/diaper');
 
 const authMiddleware = (req, res, next) => {
     const token = req.header('x-auth-token');

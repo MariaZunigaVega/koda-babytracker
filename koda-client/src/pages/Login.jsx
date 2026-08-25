@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-import "./setUp.css";
+import "../styling/setUp.css";
 import { getCurrentUserId, selectedChildStorageKey } from "../utils/authStorage";
 import { API_URL } from "../config";
 
@@ -74,7 +74,7 @@ const Login = () => {
         {[...Array(6)].map((_, i) => <div key={i} className="firefly" />)}
       </div>
 
-      <img src="/koda-logo.png" alt="Koda" className="setup-logo" />
+      <img src="/koda-logo.png" alt="Koda" className="setup-logo" onError={(e) => { e.target.style.visibility = "hidden"; }} />
 
       <div className="setup-card">
         <h1 className="setup-title">Welcome Back</h1>

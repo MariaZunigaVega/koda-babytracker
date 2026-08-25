@@ -1,0 +1,9 @@
+.habitat-ground {
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.habitat-prop {
+  position: absolute;
+}
