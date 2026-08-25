@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, Moon, Milk, Baby } from 'lucide-react';
 import '../App.css';
 import { getSelectedChildForUser } from '../utils/authStorage';
 import { API_URL } from '../config';
-
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LabelList } from 'recharts';
 const HistoryPage = () => {
   const [historyItems, setHistoryItems] = useState([]);
   const [range, setRange] = useState('day');
@@ -53,18 +53,177 @@ const HistoryPage = () => {
     fetchHistory();
   }, []);
 
-  const aiSummary = useMemo(() => {
-    const feedingCount = historyItems.filter((item) => item.type === 'feeding').length;
-    const sleepCount = historyItems.filter((item) => item.type === 'sleep').length;
-    const diaperCount = historyItems.filter((item) => item.type === 'diaper').length;
+  const filteredHistoryItems = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now);
 
-    if (!historyItems.length) {
+    if (range === 'week') {
+      start.setDate(now.getDate() - 6);
+      start.setHours(0, 0, 0, 0);
+    } else {
+      start.setHours(0, 0, 0, 0);
+    }
+
+    return historyItems.filter((item) => {
+      const itemDate = new Date(item.timestamp);
+      return itemDate >= start && itemDate <= now;
+    });
+  }, [historyItems, range]);
+
+  const aiSummary = useMemo(() => {
+    const feedingCount = filteredHistoryItems.filter((item) => item.type === 'feeding').length;
+    const sleepCount = filteredHistoryItems.filter((item) => item.type === 'sleep').length;
+    const diaperCount = filteredHistoryItems.filter((item) => item.type === 'diaper').length;
+
+    if (!filteredHistoryItems.length) {
       return 'No activity history yet. Start logging entries to build the report.';
     }
 
     return `AI-guided review: ${feedingCount} feedings, ${sleepCount} sleep records, and ${diaperCount} diaper updates captured. The history shows a steady routine with recent entries ready for export.`;
-  }, [historyItems]);
+  }, [filteredHistoryItems]);
 
+  const quickStats = useMemo(() => {
+    const sleepItems = filteredHistoryItems.filter(
+      (item) => item.type === 'sleep'
+    );
+
+    const feedingItems = filteredHistoryItems.filter(
+      (item) => item.type === 'feeding'
+    );
+
+    const diaperItems = filteredHistoryItems.filter(
+      (item) => item.type === 'diaper'
+    );
+
+    const totalSleepMinutes = sleepItems.reduce((total, item) => {
+      const match = item.detail.match(/(\d+)\s*min/);
+      const duration = match ? Number(match[1]) : 0;
+      return total + duration;
+    }, 0);
+
+    return {
+      totalSleepMinutes,
+      sleepCount: sleepItems.length,
+      feedingCount: feedingItems.length,
+      diaperCount: diaperItems.length
+    };
+  }, [filteredHistoryItems]);
+
+  const sleepChartData = useMemo(() => {
+    const sleepItems = filteredHistoryItems.filter(
+      (item) => item.type === 'sleep'
+    );
+
+    if (range === 'day') {
+      return sleepItems.map((item, index) => {
+        const match = item.detail.match(/(\d+)\s*min/);
+        const duration = match ? Number(match[1]) : 0;
+
+        return {
+          label: `Sleep ${index + 1}`,
+          minutes: duration
+        };
+      });
+    }
+
+    const dailySleep = {};
+
+    sleepItems.forEach((item) => {
+      const date = new Date(item.timestamp);
+
+      const day = date.toLocaleDateString('en-US', {
+        weekday: 'short'
+      });
+
+      const match = item.detail.match(/(\d+)\s*min/);
+      const duration = match ? Number(match[1]) : 0;
+
+      dailySleep[day] = (dailySleep[day] || 0) + duration;
+    });
+
+    return Object.entries(dailySleep).map(([day, minutes]) => ({
+      label: day,
+      minutes
+    }));
+  }, [filteredHistoryItems, range]);
+
+  // Builds feeding amount data for daily and weekly charts
+  const feedingChartData = useMemo(() => {
+    const feedingItems = filteredHistoryItems.filter(
+      (item) => item.type === 'feeding'
+    );
+
+    // Daily: each feeding is shown separately
+    if (range === 'day') {
+      return feedingItems
+        .map((item, index) => {
+          const match = item.detail.match(/(\d+(?:\.\d+)?)\s*oz/);
+          const amount = match ? Number(match[1]) : 0;
+
+          return {
+            label: `Feed ${index + 1}`,
+            ounces: amount
+          };
+        })
+        .filter((item) => item.ounces > 0);
+    }
+
+    // Weekly and adds ounces by day
+    const dailyFeeding = {};
+
+    feedingItems.forEach((item) => {
+      const match = item.detail.match(/(\d+(?:\.\d+)?)\s*oz/);
+      const amount = match ? Number(match[1]) : 0;
+
+      if (amount > 0) {
+        const date = new Date(item.timestamp);
+
+        const day = date.toLocaleDateString('en-US', {
+          weekday: 'short'
+        });
+
+        dailyFeeding[day] = (dailyFeeding[day] || 0) + amount;
+      }
+    });
+
+    return Object.entries(dailyFeeding).map(([day, ounces]) => ({
+      label: day,
+      ounces
+    }));
+  }, [filteredHistoryItems, range]);
+
+  // Counts wet, dirty and mixed diaper changes
+  const diaperChartData = useMemo(() => {
+    const counts = {
+      Wet: 0,
+      Dirty: 0,
+      Mixed: 0
+    };
+
+    filteredHistoryItems
+      .filter((item) => item.type === 'diaper')
+      .forEach((item) => {
+        if (counts[item.detail] !== undefined) {
+          counts[item.detail] += 1;
+        }
+      });
+
+    return Object.entries(counts).map(([name, value]) => ({
+      name,
+      value
+    }));
+  }, [filteredHistoryItems]);
+
+  const diaperTotal = diaperChartData.reduce(
+    (total, item) => total + item.value,
+    0
+  );
+
+  const diaperColors = [
+    '#789F75',
+    '#8A7BC2',
+    '#D7A35B'
+  ];
   const handleExport = async () => {
     try {
       setExporting(true);
@@ -100,10 +259,36 @@ const HistoryPage = () => {
     backgroundPosition: 'center',
     backgroundAttachment: 'fixed',
   };
+  const formatMinutes = (minutes) => {
+    if (minutes < 60) {
+      return `${minutes} min`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    if (remainingMinutes === 0) {
+      return `${hours} hr`;
+    }
+
+    return `${hours} hr ${remainingMinutes} min`;
+  };
 
   return (
     <div className="history-page" style={pageStyle}>
       <div className="history-shell">
+        <div className="history-report-header">
+          <h2>log history</h2>
+
+          <select
+            className="history-select"
+            value={range}
+            onChange={(event) => setRange(event.target.value)}
+          >
+            <option value="day">daily report</option>
+            <option value="week">weekly report</option>
+          </select>
+        </div>
         <div className="history-card">
           <div className="card-header">
             <FileText size={24} strokeWidth={2} />
@@ -113,19 +298,215 @@ const HistoryPage = () => {
         </div>
 
         <div className="history-card">
+          <h3 className="history-section-title">quick stats</h3>
+
+          <div className="quick-stats-grid">
+
+            <div className="quick-stat-card">
+              <Moon size={24} />
+              <strong>{formatMinutes(quickStats.totalSleepMinutes)}</strong>
+              <span>total sleep</span>
+            </div>
+
+            <div className="quick-stat-card">
+              <Moon size={24} />
+              <strong>{quickStats.sleepCount}</strong>
+              <span>sleep sessions</span>
+            </div>
+
+            <div className="quick-stat-card">
+              <Milk size={24} />
+              <strong>{quickStats.feedingCount}</strong>
+              <span>feedings</span>
+            </div>
+
+            <div className="quick-stat-card">
+              <Baby size={24} />
+              <strong>{quickStats.diaperCount}</strong>
+              <span>diaper changes</span>
+            </div>
+
+          </div>
+        </div>
+
+        <div className="history-card">
+          <h3 className="history-section-title">
+            sleep duration (minutes)
+          </h3>
+
+          {/* Sleeping Trend */}
+          {sleepChartData.length > 0 ? (
+            <div className="history-chart">
+              <ResponsiveContainer width="100%" height={160}>
+                <BarChart data={sleepChartData}>
+                  <XAxis dataKey="label" />
+                  <YAxis />
+                  <Tooltip
+                    formatter={(value) => [formatMinutes(value), 'Sleep duration']}
+                  />
+                  <Bar
+                    dataKey="minutes"
+                    fill="#8A7BC2"
+                    radius={[8, 8, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <p className="empty-msg-light">
+              No sleep data for this period.
+            </p>
+          )}
+        </div>
+        <div className="history-chart-row">
+
+          {/* Feeding Trend */}
+          <div className="history-card history-mini-card">
+            <h3 className="history-mini-title">
+              feeding trend
+            </h3>
+
+            {feedingChartData.length > 0 ? (
+              <div className="history-mini-chart">
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart
+                    data={feedingChartData}
+                    layout="vertical"
+                    margin={{
+                      top: 5,
+                      right: 38,
+                      bottom: 5,
+                      left: 0
+                    }}
+                  >
+                    <XAxis
+                      type="number"
+                      hide
+                    />
+
+                    <YAxis
+                      type="category"
+                      dataKey="label"
+                      width={42}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 10 }}
+                    />
+
+                    <Tooltip
+                      formatter={(value) => [
+                        `${value} oz`,
+                        'Feeding amount'
+                      ]}
+                    />
+
+                    <Bar
+                      dataKey="ounces"
+                      fill="#789F75"
+                      radius={[0, 6, 6, 0]}
+                      barSize={14}
+                    >
+                      <LabelList
+                        dataKey="ounces"
+                        position="right"
+                        formatter={(value) => `${value} oz`}
+                        fontSize={10}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="empty-msg-light">
+                No feeding amounts recorded.
+              </p>
+            )}
+          </div>
+
+
+          {/* Diaper Breakdown */}
+          <div className="history-card history-mini-card">
+            <h3 className="history-mini-title">
+              diaper breakdown
+            </h3>
+
+            {diaperTotal > 0 ? (
+              <>
+                <div className="history-mini-chart">
+                  <ResponsiveContainer width="100%" height={125}>
+                    <PieChart>
+                      <Pie
+                        data={diaperChartData}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={28}
+                        outerRadius={45}
+                        paddingAngle={2}
+                      >
+                        {diaperChartData.map((item, index) => (
+                          <Cell
+                            key={item.name}
+                            fill={diaperColors[index]}
+                          />
+                        ))}
+                      </Pie>
+
+                      <Tooltip
+                        formatter={(value) => [
+                          `${value} changes`,
+                          'Diapers'
+                        ]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="diaper-chart-legend">
+                  {diaperChartData.map((item, index) => {
+                    const percent =
+                      diaperTotal > 0
+                        ? Math.round((item.value / diaperTotal) * 100)
+                        : 0;
+
+                    return (
+                      <div
+                        className="diaper-legend-row"
+                        key={item.name}
+                      >
+                        <span
+                          className="diaper-legend-dot"
+                          style={{
+                            backgroundColor: diaperColors[index]
+                          }}
+                        />
+
+                        <span>{item.name}</span>
+
+                        <span>{percent}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <p className="empty-msg-light">
+                No diaper changes recorded.
+              </p>
+            )}
+          </div>
+
+        </div>
+
+        <div className="history-card">
           <div className="history-controls">
             <h3 className="history-section-title">log history</h3>
-            <select className="history-select" value={range} onChange={(event) => setRange(event.target.value)}>
-              <option value="day">daily report</option>
-              <option value="week">weekly report</option>
-            </select>
           </div>
 
           {loading ? (
             <p className="empty-msg-light">loading history…</p>
-          ) : historyItems.length > 0 ? (
+          ) : filteredHistoryItems.length > 0 ? (
             <div className="history-list">
-              {historyItems.map((item) => (
+              {filteredHistoryItems.map((item) => (
                 <div key={item.id} className="history-item">
                   <strong>{item.label}</strong>
                   <div className="empty-msg-light">{item.detail}</div>

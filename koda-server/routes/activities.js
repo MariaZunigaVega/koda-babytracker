@@ -27,6 +27,7 @@ const getRangeWindow = (range) => {
 
     if (range === 'week') {
         start.setDate(now.getDate() - 6);
+        start.setHours(0, 0, 0, 0);
     } else {
         start.setHours(0, 0, 0, 0);
     }
@@ -41,7 +42,68 @@ const filterByRange = (items, range) => {
         return timestamp >= start && timestamp <= end;
     });
 };
+// Calculates sleep duration statistics for AI report analysis
+const calculateSleepDuration = (sleeps) => {
+    if (!sleeps || sleeps.length === 0) {
+        return {
+            totalMinutes: 0,
+            averageMinutes: 0,
+            longestMinutes: 0,
+            shortestMinutes: 0
+        };
+    }
 
+    const durations = sleeps
+        .map((sleep) => Number(sleep.duration))
+        .filter((duration) => !isNaN(duration) && duration >= 0);
+
+    if (durations.length === 0) {
+        return {
+            totalMinutes: 0,
+            averageMinutes: 0,
+            longestMinutes: 0,
+            shortestMinutes: 0
+        };
+    }
+
+    const totalMinutes = durations.reduce(
+        (total, duration) => total + duration,
+        0
+    );
+
+    return {
+        totalMinutes,
+        averageMinutes: Math.round(totalMinutes / durations.length),
+        longestMinutes: Math.max(...durations),
+        shortestMinutes: Math.min(...durations)
+    };
+};
+// Calculates how often feeding, sleep, and diaper activities occur
+const calculateActivityFrequency = ({ feedings, sleeps, diapers, range }) => {
+    const daysInRange = range === 'week' ? 7 : 1;
+
+    const feedingCount = feedings.length;
+    const sleepCount = sleeps.length;
+    const diaperCount = diapers.length;
+
+    return {
+        feedingCount,
+        sleepCount,
+        diaperCount,
+
+        totalActivities:
+            feedingCount + sleepCount + diaperCount,
+
+        feedingPerDay:
+            Number((feedingCount / daysInRange).toFixed(1)),
+
+        sleepPerDay:
+            Number((sleepCount / daysInRange).toFixed(1)),
+
+        diaperPerDay:
+            Number((diaperCount / daysInRange).toFixed(1))
+    };
+};
 const buildAiAnalysis = ({ feedings, sleeps, diapers, range, childName }) => {
     const lines = [];
     lines.push(`AI-guided summary for ${childName}`);
@@ -51,7 +113,44 @@ const buildAiAnalysis = ({ feedings, sleeps, diapers, range, childName }) => {
         lines.push('No activity entries were recorded in the selected period, so there is not enough data to infer a meaningful routine yet.');
         return lines.join('\n');
     }
+    const frequencyStats = calculateActivityFrequency({
+        feedings,
+        sleeps,
+        diapers,
+        range
+    });
 
+    lines.push('Activity frequency:');
+
+    if (range === 'week') {
+        lines.push(
+            `Feeding: ${frequencyStats.feedingCount} entries, averaging ${frequencyStats.feedingPerDay} per day.`
+        );
+
+        lines.push(
+            `Sleep: ${frequencyStats.sleepCount} entries, averaging ${frequencyStats.sleepPerDay} per day.`
+        );
+
+        lines.push(
+            `Diaper changes: ${frequencyStats.diaperCount} entries, averaging ${frequencyStats.diaperPerDay} per day.`
+        );
+    } else {
+        lines.push(
+            `Feeding: ${frequencyStats.feedingCount} entries today.`
+        );
+
+        lines.push(
+            `Sleep: ${frequencyStats.sleepCount} entries today.`
+        );
+
+        lines.push(
+            `Diaper changes: ${frequencyStats.diaperCount} entries today.`
+        );
+    }
+
+    lines.push(
+        `Total activities recorded: ${frequencyStats.totalActivities}.`
+    );
     if (feedings.length > 0) {
         const latestAmount = feedings[0].amount || 'N/A';
         const feedingTrend = feedings.length >= 3 ? 'consistent' : 'light';
@@ -59,10 +158,15 @@ const buildAiAnalysis = ({ feedings, sleeps, diapers, range, childName }) => {
     }
 
     if (sleeps.length > 0) {
-        const latestSleep = sleeps[0];
-        const sleepQuality = latestSleep.quality || 'good';
-        const duration = latestSleep.duration || 0;
-        lines.push(`Sleep habits show ${sleepQuality.toLowerCase()} quality with ${duration} minutes recorded in the latest entry.`);
+        const sleepStats = calculateSleepDuration(sleeps);
+
+        lines.push(
+            `Sleep duration: ${sleepStats.totalMinutes} total minutes recorded across ${sleeps.length} sleep entries.`
+        );
+
+        lines.push(
+            `The average sleep session was ${sleepStats.averageMinutes} minutes, with the longest session lasting ${sleepStats.longestMinutes} minutes and the shortest lasting ${sleepStats.shortestMinutes} minutes.`
+        );
     }
 
     if (diapers.length > 0) {
@@ -194,6 +298,7 @@ router.post('/reports/generate', authMiddleware, async (req, res) => {
         doc.fontSize(12).text(reportText);
         doc.end();
     } catch (err) {
+        console.error('Report generation error:', err);
         res.status(500).json({ error: err.message });
     }
 });

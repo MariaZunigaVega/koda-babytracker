@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ChevronDown, X, Save } from 'lucide-react';
+import { ChevronDown, X, Save, Milk, Moon, Baby, Puzzle, Smile, ChevronRight } from 'lucide-react';
 import '../App.css';
 import { getSelectedChildForUser } from '../utils/authStorage';
 import { API_URL } from "../config";
@@ -103,65 +103,81 @@ const Activities = () => {
 
         {/* Dropdown Card */}
         {step === 1 && (
-          <div className="glass-card first-card">
-            <div className="card-header">
+          <div className="glass-card first-card activity-picker-card">
+            <div className="card-header activity-picker-header">
               <span>activity log</span>
             </div>
 
-            <button
-              type="button"
-              className="activity-menu-btn"
-              onClick={() => {
-                setType('feeding');
-                setStep(2);
-              }}
-            >
-              feeding
-            </button>
+            <p className="activity-picker-subtitle">
+              what would you like to log?
+            </p>
 
-            <button
-              type="button"
-              className="activity-menu-btn"
-              onClick={() => {
-                setType('sleep');
-                setStep(2);
-              }}
-            >
-              sleeping
-            </button>
+            <div className="activity-grid">
+              <button
+                type="button"
+                className="activity-tile"
+                onClick={() => {
+                  setType('feeding');
+                  setStep(2);
+                }}
+              >
+                <Milk size={30} />
+                <span>feeding</span>
+                <ChevronRight size={20} />
+              </button>
 
-            <button
-              type="button"
-              className="activity-menu-btn"
-              onClick={() => {
-                setType('diaper');
-                setStep(2);
-              }}
-            >
-              diaper change
-            </button>
+              <button
+                type="button"
+                className="activity-tile"
+                onClick={() => {
+                  setType('sleep');
+                  setStep(2);
+                }}
+              >
+                <Moon size={30} />
+                <span>sleeping</span>
+                <ChevronRight size={20} />
+              </button>
 
-            <button
-              type="button"
-              className="activity-menu-btn"
-              onClick={() => {
-                setType('playtime');
-                setStep(2);
-              }}
-            >
-              playtime
-            </button>
+              <button
+                type="button"
+                className="activity-tile"
+                onClick={() => {
+                  setType('diaper');
+                  setStep(2);
+                }}
+              >
+                <Baby size={30} />
+                <span>diaper change</span>
+                <ChevronRight size={20} />
+              </button>
 
-            <button
-              type="button"
-              className="activity-menu-btn"
-              onClick={() => {
-                setType('mood');
-                setStep(2);
-              }}
-            >
-              mood
-            </button>
+              <button
+                type="button"
+                className="activity-tile"
+                onClick={() => {
+                  setType('playtime');
+                  setStep(2);
+                }}
+              >
+                <Puzzle size={30} />
+                <span>playtime</span>
+                <ChevronRight size={20} />
+              </button>
+
+              <button
+                type="button"
+                className="activity-tile activity-tile-wide"
+                onClick={() => {
+                  setType('mood');
+                  setStep(2);
+                }}
+              >
+                <Smile size={30} />
+                <span>mood</span>
+                <ChevronRight size={20} />
+              </button>
+            </div>
           </div>
         )}
 
@@ -170,112 +186,165 @@ const Activities = () => {
             {/* Details Input Card */}
 
             <div className="glass-card" style={{ marginTop: '24px' }}>
-              <div className="card-header">
-                <span>details</span>
-              </div>
-
+              
               {type === 'sleep' ? (
-                // sleep fields
-                <div className="sleep-form-container">
-                  <div className="sleep-field-group">
-                    <label className="sleep-label">start time</label>
-                    <input
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                      className="sleep-input"
-                      required
-                    />
+                // Sleep fields
+                <div className="log-form-container">
+
+                  <div className="log-form-title">
+                    <Moon size={26} />
+                    <span>sleep</span>
                   </div>
 
-                  <div className="sleep-field-group">
-                    <label className="sleep-label">end time</label>
-                    <input
-                      type="time"
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                      className="sleep-input"
-                      required
-                    />
+                  <p className="log-form-subtitle">
+                    track your baby's sleep
+                  </p>
+
+                  <div className="log-field-group">
+                    <label className="log-label">start time</label>
+
+                    <div className="log-input-wrapper">
+                      <input
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        className="log-input"
+                        required
+                      />
+                    </div>
                   </div>
 
-                  <div className="sleep-field-group">
-                    <label className="sleep-label">quality</label>
-                    <select
-                      value={quality}
-                      onChange={(e) => setQuality(e.target.value)}
-                      className="sleep-input"
-                      required
-                    >
-                      <option value="">Select Sleep Quality</option>
-                      <option value="Good">Good</option>
-                      <option value="Fair">Fair</option>
-                      <option value="Poor">Poor</option>
-                    </select>
+                  <div className="log-field-group">
+                    <label className="log-label">end time</label>
+
+                    <div className="log-input-wrapper">
+                      <input
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        className="log-input"
+                        required
+                      />
+                    </div>
                   </div>
+
+                  <div className="log-field-group">
+                    <label className="log-label">quality</label>
+
+                    <div className="log-option-row">
+                      {['Good', 'Fair', 'Poor'].map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          className={`log-option-btn ${quality === option ? 'selected' : ''
+                            }`}
+                          onClick={() => setQuality(option)}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                 </div>
 
               ) : type === 'feeding' ? (
-                //feeding fields
-                <div className="sleep-form-container">
-                  <div className="sleep-field-group">
-                    <label className="sleep-label">feeding type</label>
-                    <select
-                      value={feedingType}
-                      onChange={(e) => setFeedingType(e.target.value)}
-                      className="sleep-input"
-                      required
-                    >
-                      <option value="">Select Feeding Type</option>
-                      <option value="Breast">Breast</option>
-                      <option value="Bottle">Bottle</option>
-                      <option value="Solids">Solids</option>
-                    </select>
+                // Feeding fields
+                <div className="log-form-container">
+
+                  <div className="log-form-title">
+                    <Milk size={26} />
+                    <span>feeding</span>
                   </div>
 
-                  <div className="sleep-field-group">
-                    <label className="sleep-label">amount</label>
-                    <input
-                      type="number"
-                      value={feedingAmount}
-                      onChange={(e) => setFeedingAmount(e.target.value)}
-                      className="sleep-input"
-                      placeholder="e.g. 4"
-                    />
+                  <p className="log-form-subtitle">
+                    track your baby's feeding
+                  </p>
+
+                  <div className="log-field-group">
+                    <label className="log-label">feeding type</label>
+
+                    <div className="log-option-row">
+                      {['Breast', 'Bottle', 'Solids'].map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          className={`log-option-btn ${feedingType === option ? 'selected' : ''
+                            }`}
+                          onClick={() => setFeedingType(option)}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="sleep-field-group">
-                    <label className="sleep-label">side</label>
-                    <select
-                      value={feedingSide}
-                      onChange={(e) => setFeedingSide(e.target.value)}
-                      className="sleep-input"
-                      required
-                    >
-                      <option value="">Select Side</option>
-                      <option value="Left">Left</option>
-                      <option value="Right">Right</option>
-                      <option value="N/A">N/A</option>
-                    </select>
+                  <div className="log-field-group">
+                    <label className="log-label">amount (oz)</label>
+
+                    <div className="log-input-wrapper">
+                      <Milk size={18} />
+                      <input
+                        type="number"
+                        value={feedingAmount}
+                        onChange={(e) => setFeedingAmount(e.target.value)}
+                        className="log-input"
+                        placeholder="e.g. 4"
+                        min="0"
+                      />
+                    </div>
                   </div>
+
+                  <div className="log-field-group">
+                    <label className="log-label">side</label>
+
+                    <div className="log-option-row">
+                      {['Left', 'Right', 'N/A'].map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          className={`log-option-btn ${feedingSide === option ? 'selected' : ''
+                            }`}
+                          onClick={() => setFeedingSide(option)}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                 </div>
               ) : type === 'diaper' ? (
-                //diaper fields
-                <div className="sleep-form-container">
-                  <div className="sleep-field-group">
-                    <label className="sleep-label">diaper type</label>
-                    <select
-                      value={diaperType}
-                      onChange={(e) => setDiaperType(e.target.value)}
-                      className="sleep-input"
-                      required
-                    >
-                      <option value="">Select Diaper Type</option>
-                      <option value="Wet">Wet</option>
-                      <option value="Dirty">Dirty</option>
-                      <option value="Mixed">Mixed</option>
-                    </select>
+                // Diaper fields
+                <div className="log-form-container">
+
+                  <div className="log-form-title">
+                    <Baby size={26} />
+                    <span>diaper change</span>
                   </div>
+
+                  <p className="log-form-subtitle">
+                    track your baby's diaper change
+                  </p>
+
+                  <div className="log-field-group">
+                    <label className="log-label">diaper type</label>
+
+                    <div className="log-option-row">
+                      {['Wet', 'Dirty', 'Mixed'].map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          className={`log-option-btn ${diaperType === option ? 'selected' : ''
+                            }`}
+                          onClick={() => setDiaperType(option)}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                 </div>
               ) : (
                 <input
