@@ -779,6 +779,57 @@ body {
   margin-top: 12px;
 }
 
+/* feeding and diaper charts */
+
+.history-chart-row {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.history-mini-card {
+  min-width: 0;
+  padding: 12px;
+}
+
+.history-mini-title {
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+
+.history-mini-chart {
+  width: 100%;
+}
+
+.diaper-chart-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.diaper-legend-row {
+  display: grid;
+  grid-template-columns: 8px 1fr auto;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+}
+
+.diaper-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* Only stack the charts on unusually narrow screens */
+@media (max-width: 340px) {
+  .history-chart-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Account / Baby settings page */
 .account-settings-page {
   min-height: 100vh;
