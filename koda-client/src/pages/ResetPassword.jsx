@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import "./setUp.css";
+import "../styling/setUp.css";
 import { API_URL } from "../config";
 
 const ResetPassword = () => {

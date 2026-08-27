@@ -1,0 +1,18 @@
+.habitat-ground {
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.habitat-prop {
+  position: absolute;
+}
+
+.habitat-canvas-wrap {
+  position: absolute;
+  inset: 0;
+}
+
+.habitat-canvas-wrap--no-touch-scroll {
+  touch-action: none;
+}

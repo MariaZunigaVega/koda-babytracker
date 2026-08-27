@@ -1,3 +1,5 @@
+// Reads/writes the logged-in user's JWT-derived id and their per-user selected-child record in localStorage.
+
 export const parseJwt = (token) => {
   if (!token) return null;
 

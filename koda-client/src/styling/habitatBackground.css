@@ -1,0 +1,24 @@
+.habitat-background-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: -90px;
+  z-index: 0;
+}
+
+.habitat-plain-bg {
+  position: absolute;
+  inset: 0;
+  background-color: #6fae5a;
+}
+
+.habitat-plain-bg-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  background-size: cover;
+  background-position: center;
+}
