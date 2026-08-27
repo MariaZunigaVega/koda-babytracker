@@ -9,9 +9,10 @@ import ForgotPassword from './pages/ForgotPassword';
 import ChildRegistration from './pages/childRegistration';
 import Activities from './pages/Activities';
 import ResetPassword from "./pages/ResetPassword";
-import BabySettings from './pages/babySettings';
+import AccountSettings from './pages/AccountSettings';
 import HistoryPage from './pages/HistoryPage';
-import Layout from './components/layout';
+import AnalyticsPage from './pages/analyticsPage';
+import Layout from './components/Layout';
 function App() {
   return (
     <Router>
@@ -23,8 +24,9 @@ function App() {
         <Route path="/childRegistration" element={<ChildRegistration />} />
         <Route path="/add-activity" element={<Activities />} />
         <Route path="/ParentDashboard" element={<Layout><ParentDashboard /></Layout>} />
-        <Route path="/babysettings" element={<Layout><BabySettings /></Layout>} />
-        <Route path="/history" element={<Layout><HistoryPage /></Layout>} />
+        <Route path="/account" element={<AccountSettings />} />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Routes>

@@ -1,15 +1,37 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ChevronDown, X, Save } from 'lucide-react';
+import { Save, Milk, Moon, Baby, Clock, Calendar } from 'lucide-react';
 import '../styling/App.css';
+import '../styling/activities.css';
 import { getSelectedChildForUser } from '../utils/authStorage';
 import { API_URL } from "../config";
+import Layout from '../components/Layout';
+
+const ACTIVITY_OPTIONS = [
+  { type: 'feeding', label: 'feeding' },
+  { type: 'sleep', label: 'sleeping' },
+  { type: 'diaper', label: 'diaper change' },
+  { type: 'playtime', label: 'playtime' },
+  { type: 'mood', label: 'mood' },
+];
+
+const DAYS_OF_WEEK = [
+  { key: 'Sunday', short: 'Su' },
+  { key: 'Monday', short: 'Mo' },
+  { key: 'Tuesday', short: 'Tu' },
+  { key: 'Wednesday', short: 'We' },
+  { key: 'Thursday', short: 'Th' },
+  { key: 'Friday', short: 'Fr' },
+  { key: 'Saturday', short: 'Sa' },
+];
 
 const Activities = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [type, setType] = useState('');
+  const [mode, setMode] = useState('');
+
   const [value, setValue] = useState('');
   const [feedingAmount, setFeedingAmount] = useState('');
   const [feedingType, setFeedingType] = useState('');
@@ -19,20 +41,64 @@ const Activities = () => {
   const [quality, setQuality] = useState('');
   const [diaperType, setDiaperType] = useState('');
 
+  const [repeat, setRepeat] = useState('once');
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
+  const [repeatDays, setRepeatDays] = useState([]);
+
+  const toggleRepeatDay = (day) => {
+    setRepeatDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+    );
+  };
+
+  const handleBack = () => {
+    if (step === 3) {
+      setStep(2);
+    } else if (step === 2) {
+      setStep(1);
+      setType('');
+      setMode('');
+    }
+  };
+
+  const buildActivityDetails = () => {
+    if (type === 'sleep') {
+      return { startTime, endTime, quality };
+    }
+    if (type === 'feeding') {
+      return {
+        type: feedingType,
+        amount: feedingAmount ? Number(feedingAmount) : undefined,
+        side: feedingSide || 'N/A',
+      };
+    }
+    if (type === 'diaper') {
+      return { type: diaperType };
+    }
+    return { value };
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       const childName = getSelectedChildForUser()?.name || "Gracie";
-      console.log("SELECTED CHILD:", childName);
 
-      if (type === 'sleep') {
-        console.log("SENDING SLEEP:", { childName, startTime, endTime, quality });
+      if (mode === 'schedule') {
+        await axios.post(`${API_URL}/api/schedule`, {
+          childName,
+          activityType: type,
+          repeat,
+          time: scheduleTime,
+          ...(repeat === 'once' ? { date: scheduleDate } : {}),
+          ...(repeat === 'weekly' ? { daysOfWeek: repeatDays } : {}),
+          details: buildActivityDetails(),
+        });
+      } else if (type === 'sleep') {
         const today = new Date().toISOString().split('T')[0];
-
         const sleepStart = new Date(`${today}T${startTime}`);
         const sleepEnd = new Date(`${today}T${endTime}`);
-
         const duration = Math.round((sleepEnd - sleepStart) / (1000 * 60));
 
         await axios.post(`${API_URL}/api/sleep`, {
@@ -51,7 +117,6 @@ const Activities = () => {
           side: feedingSide || 'N/A',
           timestamp: new Date(),
         });
-
       } else if (type === 'diaper') {
         await axios.post(`${API_URL}/api/diaper`, {
           childName,
@@ -66,241 +131,317 @@ const Activities = () => {
     }
   };
 
-  const backgroundStyle = {
-    backgroundImage: `url(${process.env.PUBLIC_URL + "/lightmode.jpg"})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    minHeight: '100vh',
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    paddingTop: '100px'
-  };
+  const typeLabel = ACTIVITY_OPTIONS.find((o) => o.type === type)?.label || '';
 
   return (
-    <div className="mobile-frame">
-      <div className="dashboard-container" style={backgroundStyle}>
+    <Layout>
+      <div className="activities-content">
 
-      {/* Header with Close Button */}
-      <header className="dashboard-header">
-        <img src="/koda-logo.png" alt="Koda" className="koda-logo" onError={(e) => { e.target.style.visibility = "hidden"; }} />
-        <h2 style={{ fontFamily: 'Londrina Solid', fontSize: '24px', margin: 0 }}>log activity</h2>
-        <X
-          size={26}
-          className="nav-icon"
-          onClick={() => {
-            if (step === 2) {
-              setStep(1);
-              setType('');
-            } else {
-              navigate('/parentDashboard');
-            }
-          }}
-        />
-      </header>
+        <form onSubmit={handleSubmit} className="activities-form">
 
-      <form onSubmit={handleSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-
-        {/* Dropdown Card */}
-        {step === 1 && (
-          <div className="glass-card first-card">
-            <div className="card-header">
-              <span>activity log</span>
+          {step === 1 && (
+            <div className="activities-option-list">
+              {ACTIVITY_OPTIONS.map(({ type: optionType, label }) => (
+                <button
+                  key={optionType}
+                  type="button"
+                  className="activity-menu-btn activities-option-row"
+                  onClick={() => {
+                    setType(optionType);
+                    setStep(2);
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
+          )}
 
-            <button
-              type="button"
-              className="activity-menu-btn"
-              onClick={() => {
-                setType('feeding');
-                setStep(2);
-              }}
-            >
-              feeding
-            </button>
+          {step === 2 && (
+            <>
+              <div className="glass-card activities-glass-card">
+                <div className="log-form-title">
+                  <span>how would you like to log this?</span>
+                </div>
+                <p className="log-form-subtitle">
+                  you can log this {typeLabel} now, or set it up as a recurring schedule.
+                </p>
 
-            <button
-              type="button"
-              className="activity-menu-btn"
-              onClick={() => {
-                setType('sleep');
-                setStep(2);
-              }}
-            >
-              sleeping
-            </button>
-
-            <button
-              type="button"
-              className="activity-menu-btn"
-              onClick={() => {
-                setType('diaper');
-                setStep(2);
-              }}
-            >
-              diaper change
-            </button>
-
-            <button
-              type="button"
-              className="activity-menu-btn"
-              onClick={() => {
-                setType('playtime');
-                setStep(2);
-              }}
-            >
-              playtime
-            </button>
-
-            <button
-              type="button"
-              className="activity-menu-btn"
-              onClick={() => {
-                setType('mood');
-                setStep(2);
-              }}
-            >
-              mood
-            </button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <>
-            {/* Details Input Card */}
-
-            <div className="glass-card" style={{ marginTop: '24px' }}>
-              <div className="card-header">
-                <span>details</span>
+                <div className="mode-select-list">
+                  <button
+                    type="button"
+                    className="activity-menu-btn activities-option-row"
+                    onClick={() => {
+                      setMode('now');
+                      setStep(3);
+                    }}
+                  >
+                    log activity
+                  </button>
+                  <button
+                    type="button"
+                    className="activity-menu-btn activities-option-row"
+                    onClick={() => {
+                      setMode('schedule');
+                      setStep(3);
+                    }}
+                  >
+                    schedule activity
+                  </button>
+                </div>
               </div>
 
-              {type === 'sleep' ? (
-                // sleep fields
-                <div className="sleep-form-container">
-                  <div className="sleep-field-group">
-                    <label className="sleep-label">start time</label>
+              <button type="button" className="activities-cancel-btn" onClick={handleBack}>
+                cancel
+              </button>
+            </>
+          )}
+
+          {step === 3 && (
+            <>
+              <div className="glass-card activities-glass-card">
+
+                {type === 'sleep' ? (
+                  <div className="log-form-container">
+                    <div className="log-form-title">
+                      <Moon size={28} color="#4a3a26" />
+                      <span>{mode === 'schedule' ? 'schedule sleep' : 'sleep'}</span>
+                    </div>
+                    <p className="log-form-subtitle">track your baby's sleep</p>
+
+                    <div className="log-field-group">
+                      <label className="log-label">start time</label>
+                      <div className="log-input-wrapper">
+                        <input
+                          type="time"
+                          value={startTime}
+                          onChange={(e) => setStartTime(e.target.value)}
+                          className="log-input"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="log-field-group">
+                      <label className="log-label">end time</label>
+                      <div className="log-input-wrapper">
+                        <input
+                          type="time"
+                          value={endTime}
+                          onChange={(e) => setEndTime(e.target.value)}
+                          className="log-input"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="log-field-group">
+                      <label className="log-label">quality</label>
+                      <div className="log-option-row">
+                        {['Good', 'Fair', 'Poor'].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            className={`log-option-btn ${quality === option ? 'selected' : ''}`}
+                            onClick={() => setQuality(option)}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : type === 'feeding' ? (
+                  <div className="log-form-container">
+                    <div className="log-form-title">
+                      <Milk size={28} color="#4a3a26" />
+                      <span>{mode === 'schedule' ? 'schedule feeding' : 'feeding'}</span>
+                    </div>
+                    <p className="log-form-subtitle">track your baby's feeding</p>
+
+                    <div className="log-field-group">
+                      <label className="log-label">feeding type</label>
+                      <div className="log-option-row">
+                        {['Breast', 'Bottle', 'Solids'].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            className={`log-option-btn ${feedingType === option ? 'selected' : ''}`}
+                            onClick={() => setFeedingType(option)}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="log-field-group">
+                      <label className="log-label">amount (oz)</label>
+                      <div className="log-input-wrapper">
+                        <Milk size={20} color="#5a4635" />
+                        <input
+                          type="number"
+                          value={feedingAmount}
+                          onChange={(e) => setFeedingAmount(e.target.value)}
+                          className="log-input"
+                          placeholder="e.g. 4"
+                          min="0"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="log-field-group">
+                      <label className="log-label">side</label>
+                      <div className="log-option-row">
+                        {['Left', 'Right', 'N/A'].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            className={`log-option-btn ${feedingSide === option ? 'selected' : ''}`}
+                            onClick={() => setFeedingSide(option)}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : type === 'diaper' ? (
+                  <div className="log-form-container">
+                    <div className="log-form-title">
+                      <Baby size={28} color="#4a3a26" />
+                      <span>{mode === 'schedule' ? 'schedule diaper change' : 'diaper change'}</span>
+                    </div>
+                    <p className="log-form-subtitle">track your baby's diaper change</p>
+
+                    <div className="log-field-group">
+                      <label className="log-label">diaper type</label>
+                      <div className="log-option-row">
+                        {['Wet', 'Dirty', 'Mixed'].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            className={`log-option-btn ${diaperType === option ? 'selected' : ''}`}
+                            onClick={() => setDiaperType(option)}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="log-form-container">
+                    <div className="log-form-title">
+                      <span>
+                        {mode === 'schedule'
+                          ? (type === 'mood' ? 'schedule mood logging' : `schedule ${typeLabel}`)
+                          : typeLabel}
+                      </span>
+                    </div>
                     <input
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                      className="sleep-input"
+                      type="text"
+                      className="empty-msg-light activity-input"
+                      placeholder="Enter details"
+                      value={value}
+                      onChange={(e) => setValue(e.target.value)}
                       required
                     />
                   </div>
+                )}
 
-                  <div className="sleep-field-group">
-                    <label className="sleep-label">end time</label>
-                    <input
-                      type="time"
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                      className="sleep-input"
-                      required
-                    />
+                {mode === 'schedule' && (
+                  <div className="log-form-container">
+                    <div className="log-form-title">
+                      <Calendar size={26} color="#4a3a26" />
+                      <span>schedule</span>
+                    </div>
+                    <p className="log-form-subtitle">set when this should repeat</p>
+
+                    <div className="log-field-group">
+                      <label className="log-label">repeat</label>
+                      <div className="log-option-row">
+                        {[
+                          { key: 'once', label: 'once' },
+                          { key: 'daily', label: 'daily' },
+                          { key: 'weekly', label: 'weekly' },
+                        ].map(({ key, label }) => (
+                          <button
+                            key={key}
+                            type="button"
+                            className={`log-option-btn ${repeat === key ? 'selected' : ''}`}
+                            onClick={() => setRepeat(key)}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {repeat === 'once' && (
+                      <div className="log-field-group">
+                        <label className="log-label">date</label>
+                        <div className="log-input-wrapper">
+                          <input
+                            type="date"
+                            value={scheduleDate}
+                            onChange={(e) => setScheduleDate(e.target.value)}
+                            className="log-input"
+                            required
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {repeat === 'weekly' && (
+                      <div className="log-field-group">
+                        <label className="log-label">days</label>
+                        <div className="schedule-days-row">
+                          {DAYS_OF_WEEK.map(({ key, short }) => (
+                            <button
+                              key={key}
+                              type="button"
+                              className={`schedule-day-btn ${repeatDays.includes(key) ? 'selected' : ''}`}
+                              onClick={() => toggleRepeatDay(key)}
+                            >
+                              {short}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="log-field-group">
+                      <label className="log-label">time</label>
+                      <div className="log-input-wrapper">
+                        <Clock size={20} color="#5a4635" />
+                        <input
+                          type="time"
+                          value={scheduleTime}
+                          onChange={(e) => setScheduleTime(e.target.value)}
+                          className="log-input"
+                          required
+                        />
+                      </div>
+                    </div>
                   </div>
+                )}
+              </div>
 
-                  <div className="sleep-field-group">
-                    <label className="sleep-label">quality</label>
-                    <select
-                      value={quality}
-                      onChange={(e) => setQuality(e.target.value)}
-                      className="sleep-input"
-                      required
-                    >
-                      <option value="">Select Sleep Quality</option>
-                      <option value="Good">Good</option>
-                      <option value="Fair">Fair</option>
-                      <option value="Poor">Poor</option>
-                    </select>
-                  </div>
-                </div>
+              <button type="submit" className="glass-card save-btn-card save-btn-card--activities">
+                <Save size={20} />
+                <span>{mode === 'schedule' ? 'save schedule' : 'save entry'}</span>
+              </button>
 
-              ) : type === 'feeding' ? (
-                //feeding fields
-                <div className="sleep-form-container">
-                  <div className="sleep-field-group">
-                    <label className="sleep-label">feeding type</label>
-                    <select
-                      value={feedingType}
-                      onChange={(e) => setFeedingType(e.target.value)}
-                      className="sleep-input"
-                      required
-                    >
-                      <option value="">Select Feeding Type</option>
-                      <option value="Breast">Breast</option>
-                      <option value="Bottle">Bottle</option>
-                      <option value="Solids">Solids</option>
-                    </select>
-                  </div>
+              <button type="button" className="activities-cancel-btn" onClick={handleBack}>
+                cancel
+              </button>
+            </>
+          )}
 
-                  <div className="sleep-field-group">
-                    <label className="sleep-label">amount</label>
-                    <input
-                      type="number"
-                      value={feedingAmount}
-                      onChange={(e) => setFeedingAmount(e.target.value)}
-                      className="sleep-input"
-                      placeholder="e.g. 4"
-                    />
-                  </div>
-
-                  <div className="sleep-field-group">
-                    <label className="sleep-label">side</label>
-                    <select
-                      value={feedingSide}
-                      onChange={(e) => setFeedingSide(e.target.value)}
-                      className="sleep-input"
-                      required
-                    >
-                      <option value="">Select Side</option>
-                      <option value="Left">Left</option>
-                      <option value="Right">Right</option>
-                      <option value="N/A">N/A</option>
-                    </select>
-                  </div>
-                </div>
-              ) : type === 'diaper' ? (
-                //diaper fields
-                <div className="sleep-form-container">
-                  <div className="sleep-field-group">
-                    <label className="sleep-label">diaper type</label>
-                    <select
-                      value={diaperType}
-                      onChange={(e) => setDiaperType(e.target.value)}
-                      className="sleep-input"
-                      required
-                    >
-                      <option value="">Select Diaper Type</option>
-                      <option value="Wet">Wet</option>
-                      <option value="Dirty">Dirty</option>
-                      <option value="Mixed">Mixed</option>
-                    </select>
-                  </div>
-                </div>
-              ) : (
-                <input
-                  type="text"
-                  className="empty-msg-light activity-input"
-                  placeholder="Enter details"
-                  value={value}
-                  onChange={(e) => setValue(e.target.value)}
-                  required
-                />
-              )}
-            </div>
-
-            {/* Save Button Styled like a Glass Card */}
-            <button type="submit" className="glass-card save-btn-card">
-              <Save size={24} />
-              <span>save entry</span>
-            </button>
-          </>
-        )}
-
-      </form>
+        </form>
       </div>
-    </div>
+    </Layout>
   );
 };
 

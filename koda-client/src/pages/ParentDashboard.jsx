@@ -1,76 +1,22 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useGLTF } from "@react-three/drei";
-import { ClipboardList, User } from "lucide-react";
-import "../styling/App.css";
-import "../styling/habitats.css";
+import { ClipboardList, Users } from "lucide-react";
+import "../styling/parentDashboard.css";
 import { getSelectedChildForUser } from "../utils/authStorage";
 import { API_URL } from "../config";
-import { getAvatarById, DEFAULT_MODEL } from "../constants/avatars";
-import FoxHabitat3D from "../components/habitats/FoxHabitat3D";
-import FrogHabitat3D from "../components/habitats/FrogHabitat3D";
-import BunnyHabitat3D from "../components/habitats/BunnyHabitat3D";
-import ActivitiesModal from "../components/activitiesModal";
-import CaregiversModal from "../components/caregiversModal";
-
-useGLTF.preload(DEFAULT_MODEL);
-useGLTF.preload("/models/feeding.glb");
-useGLTF.preload("/models/sleep.glb");
-
-const CornerButton = ({ icon: Icon, onClick, style }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    style={{
-      position: "absolute",
-      width: "44px",
-      height: "44px",
-      borderRadius: "50%",
-      border: "none",
-      background: "rgba(255, 253, 247, 0.8)",
-      backdropFilter: "blur(8px)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      boxShadow: "0 4px 14px rgba(15, 23, 42, 0.2)",
-      cursor: "pointer",
-      zIndex: 5,
-      ...style,
-    }}
-  >
-    <Icon size={20} strokeWidth={2} color="#2c2c2c" />
-  </button>
-);
-
-const CornerSlot = ({ icon, top, right, isOpen, onToggle, children }) => {
-  if (!isOpen) {
-    return (
-      <CornerButton
-        icon={icon}
-        onClick={onToggle}
-        style={{ top: `${top}px`, right: `${right}px` }}
-      />
-    );
-  }
-  return children({ top: `${top}px`, right: `${right}px` });
-};
+import ActivitiesModal from "../components/modals/ActivitiesModal";
+import CaregiversModal from "../components/modals/CaregiversModal";
+import NavIconButton from "../components/NavIconButton";
 
 const ParentDashboard = () => {
   const [activities, setActivities] = useState([]);
   const [caregivers, setCaregivers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [openPanel, setOpenPanel] = useState(null);
+
+  const [isActivitiesOpen, setIsActivitiesOpen] = useState(true);
+  const [isCaregiversOpen, setIsCaregiversOpen] = useState(true);
 
   const selectedChild = getSelectedChildForUser();
-  const character = getAvatarById(selectedChild?.avatar);
-  const characterModel = character?.model || DEFAULT_MODEL;
-
-  const togglePanel = (name) =>
-    setOpenPanel((current) => (current === name ? null : name));
-
-  useEffect(() => {
-    useGLTF.preload(characterModel);
-  }, [characterModel]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -80,26 +26,37 @@ const ParentDashboard = () => {
 
         const { feedings = [], sleeps = [], diapers = [] } = actRes.data;
 
+        const isToday = (value) => {
+          if (!value) return false;
+          const d = new Date(value);
+          const now = new Date();
+          return (
+            d.getFullYear() === now.getFullYear() &&
+            d.getMonth() === now.getMonth() &&
+            d.getDate() === now.getDate()
+          );
+        };
+
         const formatTime = (value) => {
           if (!value) return "";
           return new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
         };
 
-        const latestFeeding = feedings.length > 0 ? {
+        const latestFeeding = feedings.length > 0 && isToday(feedings[0].timestamp) ? {
           type: "feeding",
           value: `${feedings[0].type || "feeding"}${feedings[0].amount ? ` - ${feedings[0].amount} oz` : ""}${feedings[0].side && feedings[0].side !== "N/A" ? ` (${feedings[0].side})` : ""}`,
           time: formatTime(feedings[0].timestamp),
           rawTime: feedings[0].timestamp,
         } : null;
 
-        const latestSleep = sleeps.length > 0 ? {
+        const latestSleep = sleeps.length > 0 && isToday(sleeps[0].timestamp || sleeps[0].endTime || sleeps[0].startTime) ? {
           type: "sleep",
           value: `${formatTime(sleeps[0].startTime)} - ${formatTime(sleeps[0].endTime)}${sleeps[0].quality ? ` (${sleeps[0].quality})` : ""}`,
           time: "",
           rawTime: sleeps[0].timestamp || sleeps[0].endTime || sleeps[0].startTime,
         } : null;
 
-        const latestDiaper = diapers.length > 0 ? {
+        const latestDiaper = diapers.length > 0 && isToday(diapers[0].timestamp) ? {
           type: "diaper",
           value: diapers[0].type || "diaper change",
           time: formatTime(diapers[0].timestamp),
@@ -122,67 +79,40 @@ const ParentDashboard = () => {
   }, [selectedChild?.name]);
 
   return (
-    <div
-      className="dashboard-container"
-      style={{
-        height: "100vh",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <div style={{ position: "absolute", inset: 0 }}>
-        {character?.customHabitat === "fox" ? (
-          <FoxHabitat3D characterModel={characterModel} />
-        ) : character?.customHabitat === "frog" ? (
-          <FrogHabitat3D characterModel={characterModel} />
-        ) : character?.customHabitat === "bunny" ? (
-          <BunnyHabitat3D characterModel={characterModel} />
-        ) : (
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              backgroundImage: `url(${process.env.PUBLIC_URL + "/lightmode.jpg"})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
+    <div className="dashboard-container">
+      <div className="hm-sticker-stack">
+        {isActivitiesOpen && (
+          <ActivitiesModal
+            activities={activities}
+            onClose={() => setIsActivitiesOpen(false)}
+          />
+        )}
+        {isCaregiversOpen && (
+          <CaregiversModal
+            caregivers={caregivers}
+            onClose={() => setIsCaregiversOpen(false)}
           />
         )}
       </div>
-      <CornerSlot
-        icon={ClipboardList}
-        top={100}
-        right={16}
-        isOpen={openPanel === "activities"}
-        onToggle={() => togglePanel("activities")}
-      >
-        {(anchorStyle) => (
-          <ActivitiesModal
-            activities={activities}
-            onClose={() => setOpenPanel(null)}
-            variant="popover"
-            anchorStyle={anchorStyle}
-          />
-        )}
-      </CornerSlot>
 
-      {/* caregivers corner slot */}
-      <CornerSlot
-        icon={User}
-        top={154}
-        right={16}
-        isOpen={openPanel === "caregivers"}
-        onToggle={() => togglePanel("caregivers")}
-      >
-        {(anchorStyle) => (
-          <CaregiversModal
-            caregivers={caregivers}
-            onClose={() => setOpenPanel(null)}
-            variant="popover"
-            anchorStyle={anchorStyle}
-          />
-        )}
-      </CornerSlot>
+      {!isActivitiesOpen && (
+        <NavIconButton
+          icon={ClipboardList}
+          size={20}
+          strokeWidth={2}
+          onClick={() => setIsActivitiesOpen(true)}
+          className="dashboard-corner-btn dashboard-corner-btn--activities"
+        />
+      )}
+      {!isCaregiversOpen && (
+        <NavIconButton
+          icon={Users}
+          size={20}
+          strokeWidth={2}
+          onClick={() => setIsCaregiversOpen(true)}
+          className="dashboard-corner-btn dashboard-corner-btn--caregivers"
+        />
+      )}
     </div>
   );
 };

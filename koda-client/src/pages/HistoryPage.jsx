@@ -1,15 +1,35 @@
+// what needs to be fixed:
+// 1. habitat isnt displaying in the background of the page
+
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { FileText, Download, Moon, Milk, Baby } from 'lucide-react';
-import '../styling/App.css'; 
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LabelList } from 'recharts';
+import '../styling/App.css';
+import '../styling/historyPage.css';
+import '../styling/chartLegend.css';
 import { getSelectedChildForUser } from '../utils/authStorage';
 import { API_URL } from '../config';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LabelList } from 'recharts';
+import Layout from '../components/Layout';
+import { CollapsibleCard, MiniCollapsibleCard } from '../components/CollapsibleCard';
+import { DIAPER_COLORS } from '../constants/diaperColors';
+
+const convertMinutes = (minutes, unit) => {
+  if (unit === 'seconds') return Math.round(minutes * 60);
+  if (unit === 'hours') return Math.round((minutes / 60) * 10) / 10;
+  return minutes;
+};
+
+const unitSuffix = { minutes: 'min', seconds: 'sec', hours: 'hr' };
+
+const DIAPER_LEGEND_CLASS = { Wet: 'legend-dot--wet', Dirty: 'legend-dot--dirty', Mixed: 'legend-dot--mixed' };
+
 const HistoryPage = () => {
   const [historyItems, setHistoryItems] = useState([]);
   const [range, setRange] = useState('day');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [sleepUnit, setSleepUnit] = useState('minutes');
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -83,17 +103,9 @@ const HistoryPage = () => {
   }, [filteredHistoryItems]);
 
   const quickStats = useMemo(() => {
-    const sleepItems = filteredHistoryItems.filter(
-      (item) => item.type === 'sleep'
-    );
-
-    const feedingItems = filteredHistoryItems.filter(
-      (item) => item.type === 'feeding'
-    );
-
-    const diaperItems = filteredHistoryItems.filter(
-      (item) => item.type === 'diaper'
-    );
+    const sleepItems = filteredHistoryItems.filter((item) => item.type === 'sleep');
+    const feedingItems = filteredHistoryItems.filter((item) => item.type === 'feeding');
+    const diaperItems = filteredHistoryItems.filter((item) => item.type === 'diaper');
 
     const totalSleepMinutes = sleepItems.reduce((total, item) => {
       const match = item.detail.match(/(\d+)\s*min/);
@@ -105,24 +117,18 @@ const HistoryPage = () => {
       totalSleepMinutes,
       sleepCount: sleepItems.length,
       feedingCount: feedingItems.length,
-      diaperCount: diaperItems.length
+      diaperCount: diaperItems.length,
     };
   }, [filteredHistoryItems]);
 
   const sleepChartData = useMemo(() => {
-    const sleepItems = filteredHistoryItems.filter(
-      (item) => item.type === 'sleep'
-    );
+    const sleepItems = filteredHistoryItems.filter((item) => item.type === 'sleep');
 
     if (range === 'day') {
       return sleepItems.map((item, index) => {
         const match = item.detail.match(/(\d+)\s*min/);
         const duration = match ? Number(match[1]) : 0;
-
-        return {
-          label: `Sleep ${index + 1}`,
-          minutes: duration
-        };
+        return { label: `Sleep ${index + 1}`, minutes: duration };
       });
     }
 
@@ -130,45 +136,36 @@ const HistoryPage = () => {
 
     sleepItems.forEach((item) => {
       const date = new Date(item.timestamp);
-
-      const day = date.toLocaleDateString('en-US', {
-        weekday: 'short'
-      });
-
+      const day = date.toLocaleDateString('en-US', { weekday: 'short' });
       const match = item.detail.match(/(\d+)\s*min/);
       const duration = match ? Number(match[1]) : 0;
-
       dailySleep[day] = (dailySleep[day] || 0) + duration;
     });
 
-    return Object.entries(dailySleep).map(([day, minutes]) => ({
-      label: day,
-      minutes
-    }));
+    return Object.entries(dailySleep).map(([day, minutes]) => ({ label: day, minutes }));
   }, [filteredHistoryItems, range]);
 
-  // Builds feeding amount data for daily and weekly charts
-  const feedingChartData = useMemo(() => {
-    const feedingItems = filteredHistoryItems.filter(
-      (item) => item.type === 'feeding'
-    );
+  const sleepChartDisplayData = useMemo(
+    () => sleepChartData.map((item) => ({
+      label: item.label,
+      value: convertMinutes(item.minutes, sleepUnit),
+    })),
+    [sleepChartData, sleepUnit]
+  );
 
-    // Daily: each feeding is shown separately
+  const feedingChartData = useMemo(() => {
+    const feedingItems = filteredHistoryItems.filter((item) => item.type === 'feeding');
+
     if (range === 'day') {
       return feedingItems
         .map((item, index) => {
           const match = item.detail.match(/(\d+(?:\.\d+)?)\s*oz/);
           const amount = match ? Number(match[1]) : 0;
-
-          return {
-            label: `Feed ${index + 1}`,
-            ounces: amount
-          };
+          return { label: `Feed ${index + 1}`, ounces: amount };
         })
         .filter((item) => item.ounces > 0);
     }
 
-    // Weekly and adds ounces by day
     const dailyFeeding = {};
 
     feedingItems.forEach((item) => {
@@ -177,28 +174,16 @@ const HistoryPage = () => {
 
       if (amount > 0) {
         const date = new Date(item.timestamp);
-
-        const day = date.toLocaleDateString('en-US', {
-          weekday: 'short'
-        });
-
+        const day = date.toLocaleDateString('en-US', { weekday: 'short' });
         dailyFeeding[day] = (dailyFeeding[day] || 0) + amount;
       }
     });
 
-    return Object.entries(dailyFeeding).map(([day, ounces]) => ({
-      label: day,
-      ounces
-    }));
+    return Object.entries(dailyFeeding).map(([day, ounces]) => ({ label: day, ounces }));
   }, [filteredHistoryItems, range]);
 
-  // Counts wet, dirty and mixed diaper changes
   const diaperChartData = useMemo(() => {
-    const counts = {
-      Wet: 0,
-      Dirty: 0,
-      Mixed: 0
-    };
+    const counts = { Wet: 0, Dirty: 0, Mixed: 0 };
 
     filteredHistoryItems
       .filter((item) => item.type === 'diaper')
@@ -208,22 +193,11 @@ const HistoryPage = () => {
         }
       });
 
-    return Object.entries(counts).map(([name, value]) => ({
-      name,
-      value
-    }));
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [filteredHistoryItems]);
 
-  const diaperTotal = diaperChartData.reduce(
-    (total, item) => total + item.value,
-    0
-  );
+  const diaperTotal = diaperChartData.reduce((total, item) => total + item.value, 0);
 
-  const diaperColors = [
-    '#789F75',
-    '#8A7BC2',
-    '#D7A35B'
-  ];
   const handleExport = async () => {
     try {
       setExporting(true);
@@ -232,7 +206,7 @@ const HistoryPage = () => {
 
       const response = await axios.post(
         `${API_URL}/api/reports/generate`,
-        { childName, range },
+        { childName, range, type: 'log' },
         {
           headers: { 'x-auth-token': token },
           responseType: 'blob',
@@ -242,266 +216,49 @@ const HistoryPage = () => {
       const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${childName}-${range}-report.pdf`;
+      link.download = `${childName}-${range}-log.pdf`;
       link.click();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Could not export report', error);
+      console.error('Could not export log', error);
       alert('Unable to create the PDF right now. Please try again.');
     } finally {
       setExporting(false);
     }
   };
 
-  const pageStyle = {
-    backgroundImage: `url(${process.env.PUBLIC_URL}/lightmode.jpg)`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundAttachment: 'fixed',
-  };
-  const formatMinutes = (minutes) => {
-    if (minutes < 60) {
-      return `${minutes} min`;
-    }
-
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-
-    if (remainingMinutes === 0) {
-      return `${hours} hr`;
-    }
-
-    return `${hours} hr ${remainingMinutes} min`;
-  };
-
   return (
-    <div className="history-page" style={pageStyle}>
-      <div className="history-shell">
-        <div className="history-report-header">
-          <h2>log history</h2>
+    <Layout>
+      <div className="history-content">
 
-          <select
-            className="history-select"
-            value={range}
-            onChange={(event) => setRange(event.target.value)}
+        <div className="history-segmented-wrap">
+          <button
+            type="button"
+            className="history-segment-btn"
+            data-active={range === 'day'}
+            onClick={() => setRange('day')}
           >
-            <option value="day">daily report</option>
-            <option value="week">weekly report</option>
-          </select>
+            today
+          </button>
+          <button
+            type="button"
+            className="history-segment-btn"
+            data-active={range === 'week'}
+            onClick={() => setRange('week')}
+          >
+            past week
+          </button>
         </div>
-        <div className="history-card">
+
+        <CollapsibleCard title="activity history">
           <div className="card-header">
-            <FileText size={24} strokeWidth={2} />
-            <span>activity history</span>
+            <FileText size={22} strokeWidth={2} color="#315b3d" />
+            <span>overview</span>
           </div>
-          <p className="empty-msg-light" style={{ marginTop: '10px' }}>{aiSummary}</p>
-        </div>
+          <p className="empty-msg-light">{loading ? 'loading…' : aiSummary}</p>
+        </CollapsibleCard>
 
-        <div className="history-card">
-          <h3 className="history-section-title">quick stats</h3>
-
-          <div className="quick-stats-grid">
-
-            <div className="quick-stat-card">
-              <Moon size={24} />
-              <strong>{formatMinutes(quickStats.totalSleepMinutes)}</strong>
-              <span>total sleep</span>
-            </div>
-
-            <div className="quick-stat-card">
-              <Moon size={24} />
-              <strong>{quickStats.sleepCount}</strong>
-              <span>sleep sessions</span>
-            </div>
-
-            <div className="quick-stat-card">
-              <Milk size={24} />
-              <strong>{quickStats.feedingCount}</strong>
-              <span>feedings</span>
-            </div>
-
-            <div className="quick-stat-card">
-              <Baby size={24} />
-              <strong>{quickStats.diaperCount}</strong>
-              <span>diaper changes</span>
-            </div>
-
-          </div>
-        </div>
-
-        <div className="history-card">
-          <h3 className="history-section-title">
-            sleep duration (minutes)
-          </h3>
-
-          {/* Sleeping Trend */}
-          {sleepChartData.length > 0 ? (
-            <div className="history-chart">
-              <ResponsiveContainer width="100%" height={160}>
-                <BarChart data={sleepChartData}>
-                  <XAxis dataKey="label" />
-                  <YAxis />
-                  <Tooltip
-                    formatter={(value) => [formatMinutes(value), 'Sleep duration']}
-                  />
-                  <Bar
-                    dataKey="minutes"
-                    fill="#8A7BC2"
-                    radius={[8, 8, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <p className="empty-msg-light">
-              No sleep data for this period.
-            </p>
-          )}
-        </div>
-        <div className="history-chart-row">
-
-          {/* Feeding Trend */}
-          <div className="history-card history-mini-card">
-            <h3 className="history-mini-title">
-              feeding trend
-            </h3>
-
-            {feedingChartData.length > 0 ? (
-              <div className="history-mini-chart">
-                <ResponsiveContainer width="100%" height={180}>
-                  <BarChart
-                    data={feedingChartData}
-                    layout="vertical"
-                    margin={{
-                      top: 5,
-                      right: 38,
-                      bottom: 5,
-                      left: 0
-                    }}
-                  >
-                    <XAxis
-                      type="number"
-                      hide
-                    />
-
-                    <YAxis
-                      type="category"
-                      dataKey="label"
-                      width={42}
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10 }}
-                    />
-
-                    <Tooltip
-                      formatter={(value) => [
-                        `${value} oz`,
-                        'Feeding amount'
-                      ]}
-                    />
-
-                    <Bar
-                      dataKey="ounces"
-                      fill="#789F75"
-                      radius={[0, 6, 6, 0]}
-                      barSize={14}
-                    >
-                      <LabelList
-                        dataKey="ounces"
-                        position="right"
-                        formatter={(value) => `${value} oz`}
-                        fontSize={10}
-                      />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <p className="empty-msg-light">
-                No feeding amounts recorded.
-              </p>
-            )}
-          </div>
-
-
-          {/* Diaper Breakdown */}
-          <div className="history-card history-mini-card">
-            <h3 className="history-mini-title">
-              diaper breakdown
-            </h3>
-
-            {diaperTotal > 0 ? (
-              <>
-                <div className="history-mini-chart">
-                  <ResponsiveContainer width="100%" height={125}>
-                    <PieChart>
-                      <Pie
-                        data={diaperChartData}
-                        dataKey="value"
-                        nameKey="name"
-                        innerRadius={28}
-                        outerRadius={45}
-                        paddingAngle={2}
-                      >
-                        {diaperChartData.map((item, index) => (
-                          <Cell
-                            key={item.name}
-                            fill={diaperColors[index]}
-                          />
-                        ))}
-                      </Pie>
-
-                      <Tooltip
-                        formatter={(value) => [
-                          `${value} changes`,
-                          'Diapers'
-                        ]}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="diaper-chart-legend">
-                  {diaperChartData.map((item, index) => {
-                    const percent =
-                      diaperTotal > 0
-                        ? Math.round((item.value / diaperTotal) * 100)
-                        : 0;
-
-                    return (
-                      <div
-                        className="diaper-legend-row"
-                        key={item.name}
-                      >
-                        <span
-                          className="diaper-legend-dot"
-                          style={{
-                            backgroundColor: diaperColors[index]
-                          }}
-                        />
-
-                        <span>{item.name}</span>
-
-                        <span>{percent}%</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              <p className="empty-msg-light">
-                No diaper changes recorded.
-              </p>
-            )}
-          </div>
-
-        </div>
-
-        <div className="history-card">
-          <div className="history-controls">
-            <h3 className="history-section-title">log history</h3>
-          </div>
-
+        <CollapsibleCard title="entries history" defaultOpen={false}>
           {loading ? (
             <p className="empty-msg-light">loading history…</p>
           ) : filteredHistoryItems.length > 0 ? (
@@ -515,18 +272,130 @@ const HistoryPage = () => {
               ))}
             </div>
           ) : (
-            <p className="empty-msg-light">No history yet. Add entries and export a report from here.</p>
+            <p className="empty-msg-light">No history yet. Log an activity to see it here.</p>
           )}
+        </CollapsibleCard>
+
+        <CollapsibleCard title="quick stats">
+          <div className="history-quick-stats-grid">
+            <div className="history-quick-stat-card">
+              <Moon size={22} color="#315b3d" />
+              <strong className="history-quick-stat-value">
+                {quickStats.totalSleepMinutes < 60
+                  ? `${quickStats.totalSleepMinutes} min`
+                  : `${Math.floor(quickStats.totalSleepMinutes / 60)} hr ${quickStats.totalSleepMinutes % 60 || ''}${quickStats.totalSleepMinutes % 60 ? ' min' : ''}`}
+              </strong>
+              <span className="history-quick-stat-label">total sleep</span>
+            </div>
+            <div className="history-quick-stat-card">
+              <Moon size={22} color="#315b3d" />
+              <strong className="history-quick-stat-value">{quickStats.sleepCount}</strong>
+              <span className="history-quick-stat-label">sleep sessions</span>
+            </div>
+            <div className="history-quick-stat-card">
+              <Milk size={22} color="#315b3d" />
+              <strong className="history-quick-stat-value">{quickStats.feedingCount}</strong>
+              <span className="history-quick-stat-label">feedings</span>
+            </div>
+            <div className="history-quick-stat-card">
+              <Baby size={22} color="#315b3d" />
+              <strong className="history-quick-stat-value">{quickStats.diaperCount}</strong>
+              <span className="history-quick-stat-label">diaper changes</span>
+            </div>
+          </div>
+        </CollapsibleCard>
+
+        <CollapsibleCard
+          title="sleep duration"
+          headerExtra={(
+            <select
+              value={sleepUnit}
+              onChange={(event) => setSleepUnit(event.target.value)}
+              className="history-unit-select"
+            >
+              <option value="seconds">seconds</option>
+              <option value="minutes">minutes</option>
+              <option value="hours">hours</option>
+            </select>
+          )}
+        >
+          {sleepChartDisplayData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={sleepChartDisplayData}>
+                <XAxis dataKey="label" />
+                <YAxis />
+                <Tooltip formatter={(value) => [`${value} ${unitSuffix[sleepUnit]}`, 'Sleep duration']} />
+                <Bar dataKey="value" fill="#8A7BC2" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="empty-msg-light">No sleep data for this period.</p>
+          )}
+        </CollapsibleCard>
+
+        <div className="chart-row">
+          <MiniCollapsibleCard title="feeding entries">
+            {feedingChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={feedingChartData} layout="vertical" margin={{ top: 5, right: 38, bottom: 5, left: 0 }}>
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="label" width={42} axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                  <Tooltip formatter={(value) => [`${value} oz`, 'Feeding amount']} />
+                  <Bar dataKey="ounces" fill="#789F75" radius={[0, 6, 6, 0]} barSize={14}>
+                    <LabelList dataKey="ounces" position="right" formatter={(value) => `${value} oz`} fontSize={10} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="empty-msg-light">No feeding amounts recorded.</p>
+            )}
+          </MiniCollapsibleCard>
+
+          <MiniCollapsibleCard title="diaper entries">
+            {diaperTotal > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={125}>
+                  <PieChart>
+                    <Pie data={diaperChartData} dataKey="value" nameKey="name" innerRadius={28} outerRadius={45} paddingAngle={2}>
+                      {diaperChartData.map((item, index) => (
+                        <Cell key={item.name} fill={DIAPER_COLORS[index]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`${value} changes`, 'Diapers']} />
+                  </PieChart>
+                </ResponsiveContainer>
+
+                <div>
+                  {diaperChartData.map((item) => {
+                    const percent = diaperTotal > 0 ? Math.round((item.value / diaperTotal) * 100) : 0;
+                    return (
+                      <div className="legend-row" key={item.name}>
+                        <span className={`legend-dot ${DIAPER_LEGEND_CLASS[item.name]}`} />
+                        <span>{item.name}</span>
+                        <span className="legend-row-percent">{percent}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <p className="empty-msg-light">No diaper changes recorded.</p>
+            )}
+          </MiniCollapsibleCard>
         </div>
 
-        <div className="footer-export">
-          <button type="button" className="export-btn" onClick={handleExport} disabled={exporting}>
-            <Download size={18} style={{ marginRight: '8px' }} />
-            {exporting ? 'creating pdf…' : 'export pdf'}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="glass-card save-btn-card history-export-btn"
+          onClick={handleExport}
+          disabled={exporting}
+        >
+          <Download size={22} />
+          <span>{exporting ? 'creating pdf…' : 'export pdf'}</span>
+        </button>
+
       </div>
-    </div>
+    </Layout>
   );
 };
 

@@ -1,3 +1,6 @@
+// Static list of selectable child avatars/characters, each with its model path, habitat theme, and 
+// selection-screen background gradient.
+
 export const DEFAULT_MODEL = "/models/characters/bear.glb";
 
 export const AVATARS = [
@@ -23,6 +26,7 @@ export const AVATARS = [
     habitatClass: "habitat-panda",
     model: "/models/characters/panda.glb",
     bg: "linear-gradient(180deg, #a8b8a0 0%, #eef7e8 100%)",
+    customHabitat: "panda",
   },
   {
     id: "koala",
@@ -30,6 +34,7 @@ export const AVATARS = [
     habitatClass: "habitat-koala",
     model: "/models/characters/koala.glb",
     bg: "linear-gradient(180deg, #8fa8b0 0%, #d9cfc0 100%)",
+    customHabitat: "koala",
   },
   {
     id: "bear",
@@ -37,6 +42,7 @@ export const AVATARS = [
     habitatClass: "habitat-bear",
     model: "/models/characters/bear.glb",
     bg: "linear-gradient(180deg, #a8845a 0%, #7a9b5c 100%)",
+    customHabitat: "bear",
   },
   {
     id: "fox",

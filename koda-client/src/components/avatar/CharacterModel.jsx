@@ -1,3 +1,5 @@
+// Idle-bobbing 3D character model renderer plus an error boundary that silently hides a character if its model fails to load.
+
 import React, { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
