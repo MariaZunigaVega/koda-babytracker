@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-import { ChevronDown, X, Save, Milk, Moon, Baby, Puzzle, Smile, ChevronRight } from 'lucide-react';
+import { ChevronDown, X, Save, Milk, Moon, Baby, Puzzle, Smile, ChevronRight, Clock, Calendar } from 'lucide-react';
 import '../App.css';
-
-import { Save, Milk, Moon, Baby, Clock, Calendar } from 'lucide-react';
 import '../styling/App.css';
 import '../styling/activities.css';
 
