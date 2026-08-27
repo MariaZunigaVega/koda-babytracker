@@ -48,7 +48,7 @@ const HabitatBackground = () => {
         <div className="habitat-plain-bg">
           <div
             className="habitat-plain-bg-image"
-            style={{ backgroundImage: `url(${process.env.PUBLIC_URL + "/assets/grass.png"})` }}
+            style={{ backgroundImage: `url(${process.env.PUBLIC_URL + "/lightmode.jpg"})` }}
           />
         </div>
       )}
