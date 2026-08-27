@@ -1,0 +1,15 @@
+//mdz0019
+
+const mongoose = require('mongoose');
+
+const SleepSchema = new mongoose.Schema({
+    childName: { type: String, required: true },
+    startTime: { type: Date, required: true },
+    endTime: { type: Date, required: true },
+    duration: { type: Number, required: true }, 
+    type: { type: String, enum: ['Nap', 'Night'] },  
+    quality: { type: String, enum: ['Good', 'Fair', 'Poor'] },  
+    timestamp: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model('Sleep', SleepSchema);

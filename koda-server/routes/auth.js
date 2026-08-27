@@ -22,16 +22,21 @@ const authMiddleware = (req, res, next) => {
     return res.status(401).json({ msg: "Token is not valid" });
   }
 };
-
-// Register a new user
 router.post("/register", async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Check if the user already exists
+    if (!username || !email || !password) {
+      return res.status(400).json({ msg: "Username, email, and password are all required." });
+    }
     let user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ msg: "This email is already registered." });
+    }
+
+    let existingUsername = await User.findOne({ username });
+    if (existingUsername) {
+      return res.status(400).json({ msg: "This username is already taken." });
     }
 
     // Hash the password
@@ -46,8 +51,11 @@ router.post("/register", async (req, res) => {
     });
 
     await user.save();
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is not set in the environment - check your .env file.");
+      return res.status(500).json({ message: "Server misconfiguration: missing JWT secret." });
+    }
 
-    // Sign token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "24h",
     });
@@ -55,28 +63,24 @@ router.post("/register", async (req, res) => {
     res.status(201).json({ token });
   } catch (err) {
     console.error("FULL ERROR:", err);
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyPattern || {})[0] || "field";
+      return res.status(400).json({ msg: `This ${field} is already in use.` });
+    }
     res.status(500).json({ message: err.message });
   }
 });
-
-// Login
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ msg: "Invalid credentials." });
     }
-
-    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ msg: "Invalid credentials." });
     }
-
-    // Sign token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "24h",
     });
@@ -124,7 +128,7 @@ router.post('/forgot-password', async (req, res) => {
       text: `Reset your password here: http://localhost:3000/reset-password/${token}`
     };
 
-    await transporter.sendMail(mailOptions);    
+    await transporter.sendMail(mailOptions);
     res.json({ msg: "Email sent!" });
 
   } catch (err) {
@@ -139,7 +143,7 @@ router.post('/reset-password/:token', async (req, res) => {
   try {
     const user = await User.findOne({
       resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() } // $gt means "greater than"
+      resetPasswordExpires: { $gt: Date.now() }
     });
 
     if (!user) {

@@ -1,0 +1,20 @@
+.dashboard-container {
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-corner-btn {
+  position: absolute;
+  z-index: 5;
+}
+
+.dashboard-corner-btn--activities {
+  bottom: 78px;
+  left: 18px;
+}
+
+.dashboard-corner-btn--caregivers {
+  bottom: 132px;
+  left: 18px;
+}

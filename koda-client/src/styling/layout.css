@@ -1,0 +1,123 @@
+.layout-mobile-frame {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  transform: translateZ(0);
+  border-top: 1px solid rgba(90, 70, 53, 0.35);
+  border-bottom: 1px solid rgba(90, 70, 53, 0.35);
+}
+
+.layout-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  margin: 0 auto;
+  height: 84px;
+  background: transparent;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 12px;
+  padding: 0 18px;
+  border-bottom: 1.5px solid rgba(90, 70, 53, 0.4);
+  z-index: 1000;
+}
+
+.layout-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  margin: 0 auto;
+  height: 66px;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: transparent;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-top: 1.5px solid rgba(90, 70, 53, 0.4);
+  z-index: 1000;
+}
+
+.layout-logo-btn {
+  grid-column: 1;
+  justify-self: start;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.layout-logo-fallback {
+  font-family: "Londrina Solid", cursive;
+  font-size: 18px;
+  color: #5a4635;
+  background: rgba(255, 253, 247, 0.8);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+  border-radius: 12px;
+  padding: 6px 12px;
+  line-height: 1;
+}
+
+.koda-logo {
+  height: 50px;
+  width: auto;
+}
+
+.koda-logo-corner {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.header-bell-btn {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.name-dropdown-btn {
+  justify-self: center;
+  font-size: var(--pill-font-size, 22px);
+  background: rgba(255, 253, 247, 0.8);
+  backdrop-filter: blur(8px);
+  border: 2px solid #5a4635;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+  font-family: "Baloo 2", "Nunito", sans-serif;
+  font-weight: 700;
+  color: #4a3a26;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 999px;
+  max-width: 100%;
+  white-space: nowrap;
+  transition:
+    transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.name-dropdown-btn:hover {
+  transform: translateY(-2px);
+}
+
+.name-dropdown-btn:active {
+  transform: translateY(2px);
+}
+
+.layout-name-pill-static {
+  cursor: default;
+}
+
+.layout-name-pill-chevron {
+  flex-shrink: 0;
+}

@@ -1,0 +1,293 @@
+@import url("https://fonts.googleapis.com/css2?family=Londrina+Solid:wght@100;300;400;900&display=swap");
+
+.hm-overlay {
+  display: contents;
+}
+
+.hm-sticker-stack {
+  position: fixed;
+  top: 96px;
+  right: 24px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: min(380px, calc(100vw - 48px));
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.hm-panel {
+  position: relative;
+  width: 100%;
+  flex-shrink: 0;
+  overflow: hidden;
+  max-height: 48vh;
+  padding: 18px;
+  border-radius: 24px;
+  color: #2e4d35;
+  animation: hm-panel-in 0.2s ease;
+}
+
+.hm-panel.hm-todays-activities {
+  isolation: isolate;
+  transform: translateZ(0);
+  clip-path: inset(0 round 24px);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.42));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 2px solid rgba(122, 156, 122, 0.45);
+  box-shadow: 0 6px 14px rgba(25, 49, 31, 0.22);
+}
+
+.hm-panel.hm-caregivers {
+  isolation: isolate;
+  transform: translateZ(0);
+  clip-path: inset(0 round 24px);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.42));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 2px solid rgba(122, 156, 122, 0.45);
+  box-shadow: 0 6px 14px rgba(25, 49, 31, 0.22);
+}
+
+@keyframes hm-panel-in {
+  from {
+    transform: translateX(18px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.hm-reopen-btn {
+  position: fixed;
+  right: 24px;
+  z-index: 2000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 8px 14px;
+  border: 2px solid rgba(70, 105, 75, 0.45);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(250, 253, 242, 0.98), rgba(232, 243, 220, 0.96));
+  box-shadow: 0 4px 0 rgba(63, 91, 67, 0.55), 0 10px 24px rgba(25, 49, 31, 0.16);
+  color: #315b3d;
+  font-family: "Londrina Solid", cursive;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.hm-reopen-btn.hm-todays-activities {
+  top: 88px;
+}
+
+.hm-reopen-btn.hm-caregivers {
+  top: 360px;
+}
+
+.hm-reopen-btn:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+.hm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  color: #315b3d;
+}
+
+.hm-title-group {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.hm-title {
+  font-family: "Londrina Solid", cursive;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.05;
+  margin: 0;
+  letter-spacing: 0.2px;
+  text-transform: lowercase;
+  color: #315b3d;
+}
+
+.hm-close-btn {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border: 2px solid rgba(70, 105, 75, 0.35);
+  border-radius: 7px;
+  background: rgba(255, 255, 250, 0.72);
+  color: #416149;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.hm-close-btn:hover {
+  background: #ffffff;
+  transform: rotate(4deg) scale(1.04);
+}
+
+.hm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  overflow-y: auto;
+  font-family: "Londrina Solid", cursive;
+  font-size: 17px;
+  line-height: 1.35;
+  color: #35543d;
+}
+
+.hm-body button,
+.hm-body p,
+.hm-body li,
+.hm-body span,
+.hm-body label {
+  font-family: "Londrina Solid", cursive;
+}
+
+.hm-list-item {
+  font-size: 17px;
+  font-weight: 300;
+  line-height: 1.3;
+  color: #35543d;
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(104, 143, 105, 0.28);
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin: 0;
+}
+
+.hm-activity-type {
+  text-transform: capitalize;
+}
+
+.hm-empty {
+  font-size: 16px;
+  font-weight: 300;
+  color: #6b7b6c;
+  text-align: center;
+  padding: 10px 0;
+  margin: 0;
+}
+
+.hm-action-btn {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  background: #6f9f68;
+  color: #fffdf7;
+  border: 2px solid #426747;
+  box-shadow: 0 3px 0 #36543b;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  margin-top: 3px;
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.hm-action-btn:hover {
+  background: #7eae75;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 #36543b;
+}
+
+.hm-action-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #36543b;
+}
+
+.hm-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hm-action-btn.secondary {
+  background: rgba(255, 255, 250, 0.78);
+  color: #3d5d43;
+  border-color: #9dbd94;
+  box-shadow: 0 3px 0 rgba(73, 107, 79, 0.35);
+}
+
+.hm-action-btn.secondary:hover {
+  background: #e7f3dc;
+}
+
+.hm-link-btn,
+.hm-inline-link {
+  background: none;
+  border: none;
+  color: #4f7f57;
+  font-family: "Londrina Solid", cursive;
+  font-size: 16px;
+  font-weight: 400;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.hm-link-btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 5px 0 0;
+}
+
+.hm-inline-link {
+  padding: 0;
+  margin: 0;
+  display: inline;
+}
+
+.hm-link-btn:hover,
+.hm-inline-link:hover {
+  color: #315b3d;
+}
+
+.hm-link-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+@media (max-width: 600px) {
+  .hm-sticker-stack {
+    top: 92px;
+    right: 12px;
+    width: calc(100vw - 24px);
+    max-height: calc(100vh - 104px);
+    gap: 28px;
+  }
+
+  .hm-reopen-btn {
+    right: 12px;
+    width: auto;
+  }
+
+  .hm-reopen-btn.hm-todays-activities {
+    top: 12px;
+  }
+
+  .hm-reopen-btn.hm-caregivers {
+    top: 300px;
+  }
+}

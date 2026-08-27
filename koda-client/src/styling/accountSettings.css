@@ -1,0 +1,156 @@
+.account-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 104px 18px 110px;
+}
+
+.glass-card--translucent {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.42));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 2px solid rgba(122, 156, 122, 0.45);
+  box-shadow: 0 10px 26px rgba(25, 49, 31, 0.22);
+  color: #2e4d35;
+}
+
+.account-category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.account-collapse-row {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.32s ease, opacity 0.22s ease;
+}
+
+.account-collapse-row--open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.account-collapse-row--gap.account-collapse-row--open {
+  margin-top: 10px;
+}
+
+.account-collapse-row-inner {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.account-collapse-row--open .account-collapse-row-inner {
+  pointer-events: auto;
+}
+
+.account-card-header--flush {
+  margin-bottom: 0;
+}
+
+.account-card-header--panel {
+  margin-bottom: 10px;
+}
+
+.account-category-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.account-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.account-expanded-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.account-empty-msg {
+  margin: 0;
+}
+
+.account-empty-msg--status {
+  margin-bottom: 10px;
+}
+
+.account-empty-msg--panel {
+  margin: 0;
+  margin-top: 10px;
+}
+
+.account-baby-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.account-field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #5e7a5e;
+  margin-bottom: 6px;
+}
+
+.account-field-input {
+  width: 100%;
+  border: 1.5px solid rgba(122, 156, 122, 0.45);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-family: "Nunito", sans-serif;
+  font-size: 14px;
+  color: #2e4d35;
+  background: rgba(255, 255, 255, 0.7);
+  margin-bottom: 14px;
+}
+
+.account-toggle-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: "Nunito", sans-serif;
+  font-weight: 700;
+  font-size: 12.5px;
+  color: #4f7f57;
+  text-decoration: underline;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.account-save-btn--saving {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.account-content .save-btn-card {
+  width: 78%;
+  margin: 20px auto 0;
+  background: #6cbf4f;
+}
+
+.account-content .save-btn-card:hover {
+  background: #7bd15e;
+}
+
+.account-content .save-btn-card:active {
+  background: #6cbf4f;
+}
+
+.account-toggle-link--bottom {
+  align-self: center;
+  margin-top: 2px;
+}
