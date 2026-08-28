@@ -1,0 +1,25 @@
+/* responsible for styling the avatar habitat backdrop and its for the character selection screen */
+.avatar-habitat-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.avatar-habitat-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+.avatar-habitat-layer--visible {
+  opacity: 1;
+}
+
+.avatar-habitat-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20, 24, 16, 0.18) 0%, rgba(20, 24, 16, 0.42) 100%);
+}

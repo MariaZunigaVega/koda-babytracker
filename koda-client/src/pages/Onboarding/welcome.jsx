@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import "../styling/setUp.css";
+import "../../styling/pages/setUp.css";
 const kodaLogo = "/assets/koda-logo.png";  
 const Welcome = () => {
   const navigate = useNavigate();

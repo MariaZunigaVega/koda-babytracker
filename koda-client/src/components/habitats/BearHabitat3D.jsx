@@ -7,7 +7,7 @@ import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import "../../styling/habitats.css";
+import "../../styling/components/habitats.css";
 import { DEFAULT_MODEL } from "../../constants/avatars";
 import { useGroundedOffset, seededRand, drawWrapped } from "./habitatUtils";
 
@@ -595,7 +595,7 @@ const ISO_POSITION = [
   ISO_DISTANCE * Math.cos(ISO_ELEVATION) * Math.cos(ISO_YAW),
 ];
 
-const BearHabitat3D = ({ characterModel }) => {
+const BearHabitat3D = ({ characterModel, showCharacter = true }) => {
   return (
     <div className="habitat-canvas-wrap habitat-canvas-wrap--no-touch-scroll">
       <Canvas
@@ -671,10 +671,11 @@ const BearHabitat3D = ({ characterModel }) => {
           <Firefly bounds={2.6} speed={0.35} height={0.9} />
           <Firefly bounds={2.0} speed={0.4} height={1.2} />
           <Firefly bounds={3.2} speed={0.3} height={0.7} />
-
+          {showCharacter &&( 
           <CharacterErrorBoundary position={BEAR_HOME_POSITION}>
             <WanderingCharacter modelPath={characterModel} homePosition={BEAR_HOME_POSITION} />
           </CharacterErrorBoundary>
+          )}
         </React.Suspense>
       </Canvas>
     </div>

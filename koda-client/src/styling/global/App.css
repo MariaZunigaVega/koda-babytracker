@@ -1,5 +1,4 @@
-/* Shared card/button styles used on AccountSettings, Activities, HistoryPage, and analyticsPage. */
-
+/* Global styles: font imports, resets, and shared card/button classes (glass-card, save-btn-card) used across AccountSettings, Activities, HistoryPage, and AnalyticsPage. */
 @import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Londrina+Solid:wght@100;300;400;900&family=Nunito:wght@400;600;700;800;900&display=swap");
 
 * {

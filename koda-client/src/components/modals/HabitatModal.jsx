@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import "../../styling/modals.css";
+import "../../styling/components/modals.css";
 
 const HabitatModal = ({ title, icon: Icon, onClose, children, className = "" }) => {
   const [isOpen, setIsOpen] = useState(true);

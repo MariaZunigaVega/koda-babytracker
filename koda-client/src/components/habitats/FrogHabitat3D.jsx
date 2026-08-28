@@ -4,7 +4,7 @@ import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import "../../styling/habitats.css";
+import "../../styling/components/habitats.css";
 import { DEFAULT_MODEL } from "../../constants/avatars";
 import { useGroundedOffset, seededRand, drawWrapped } from "./habitatUtils";
 
@@ -1120,7 +1120,7 @@ const ISO_POSITION = [
   ISO_DISTANCE * Math.cos(ISO_ELEVATION) * Math.cos(ISO_YAW),
 ];
 
-const FrogHabitat3D = ({ characterModel }) => {
+const FrogHabitat3D = ({ characterModel, showCharacter = true }) => {
   const [ripples, setRipples] = useState([]);
 
   const addRipple = (position) => {
@@ -1216,10 +1216,11 @@ const FrogHabitat3D = ({ characterModel }) => {
             <PondRock />
             <Flowers />
             <GrassTufts />
-
+            {showCharacter && (
             <CharacterErrorBoundary position={HOME_PAD_POSITION}>
               <IdleCharacter modelPath={characterModel} homePosition={HOME_PAD_POSITION} onRipple={addRipple} scale={2.75} />
             </CharacterErrorBoundary>
+            )}
           </group>
         </React.Suspense>
       </Canvas>

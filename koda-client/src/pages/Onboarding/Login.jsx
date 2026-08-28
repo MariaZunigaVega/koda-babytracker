@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-import "../styling/setUp.css";
-import { getCurrentUserId, selectedChildStorageKey } from "../utils/authStorage";
-import { API_URL } from "../config";
+import "../../styling/pages/setUp.css";
+import { getCurrentUserId, selectedChildStorageKey } from "../../utils/authStorage";
+import { API_URL } from "../../config";
 
 const Login = () => {
   const navigate = useNavigate();

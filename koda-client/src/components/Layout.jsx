@@ -17,7 +17,7 @@ import { getPageLabel, getPillFontSize } from "../constants/pageLabels";
 import HabitatBackground from "./HabitatBackground";
 import NavIconButton from "./NavIconButton";
 import DarkModeToggle from "./DarkModeToggle";
-import "../styling/layout.css";
+import "../styling/global/layout.css";
 
 const Layout = ({ children }) => {
   const navigate = useNavigate();

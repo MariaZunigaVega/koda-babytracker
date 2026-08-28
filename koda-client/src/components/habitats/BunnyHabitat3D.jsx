@@ -3,7 +3,7 @@ import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import "../../styling/habitats.css";
+import "../../styling/components/habitats.css";
 import { DEFAULT_MODEL } from "../../constants/avatars";
 import { useGroundedOffset, seededRand } from "./habitatUtils";
 
@@ -901,7 +901,7 @@ const ISO_POSITION = [
   ISO_DISTANCE * Math.cos(ISO_ELEVATION) * Math.cos(ISO_YAW),
 ];
 
-const BunnyHabitat3D = ({ characterModel }) => {
+const BunnyHabitat3D = ({ characterModel, showCharacter = true }) => {
   const [poofs, setPoofs] = useState([]);
 
   const addPoof = (position) => {
@@ -973,10 +973,11 @@ const BunnyHabitat3D = ({ characterModel }) => {
           <Rocks />
           <Flowers />
           <Mushrooms />
-
+          {showCharacter && (
           <BunnyErrorBoundary position={BUNNY_HOME_POSITION}>
             <IdleBunny modelPath={characterModel} homePosition={BUNNY_HOME_POSITION} onHop={addPoof} scale={BUNNY_SCALE} />
           </BunnyErrorBoundary>
+          )}
         </React.Suspense>
       </Canvas>
     </div>

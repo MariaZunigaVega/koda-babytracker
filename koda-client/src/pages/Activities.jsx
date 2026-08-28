@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 import { ChevronDown, X, Save, Milk, Moon, Baby, Puzzle, Smile, ChevronRight, Clock, Calendar } from 'lucide-react';
-import '../App.css';
-import '../styling/App.css';
-import '../styling/activities.css';
+import '../styling/global/App.css';
+import '../styling/pages/activities.css';
 
 import { getSelectedChildForUser } from '../utils/authStorage';
 import { API_URL } from "../config";

@@ -1,6 +1,6 @@
 // universal collapsible card component used in the dashboard modals and elsewhere
 import React, { useState } from "react";
-import "../styling/collapsibleCard.css";
+import "../styling/components/collapsibleCard.css";
 
 export const CollapsibleCard = ({ title, headerExtra, defaultOpen = true, children }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);

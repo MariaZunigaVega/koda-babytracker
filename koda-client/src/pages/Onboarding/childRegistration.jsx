@@ -3,10 +3,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import "../styling/setUp.css";
-import { setSelectedChildForUser } from "../utils/authStorage";
-import { getAvatarById, DEFAULT_MODEL } from "../constants/avatars";
-import { API_URL } from "../config";
+import "../../styling/pages/setUp.css";
+import { setSelectedChildForUser } from "../../utils/authStorage";
+import { getAvatarById, DEFAULT_MODEL } from "../../constants/avatars";
+import { API_URL } from "../../config";
 
 const ChildRegistration = () => {
   const navigate = useNavigate();

@@ -1,3 +1,4 @@
+/* Styling for the account setup / onboarding flow: page wrapper, fireflies animation, avatar carousel, and setup buttons. */
 @import url("https://fonts.googleapis.com/css2?family=Londrina+Solid:wght@100;300;400;900&display=swap");
 
 /* page wrapper */
@@ -111,7 +112,6 @@
   width: auto;
   margin-bottom: 0;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
-  animation: logoBounce 3s ease-in-out infinite;
 }
 
 .setup-logo-x {
@@ -362,16 +362,18 @@
 .setup-footer {
   font-family: "Londrina Solid", cursive;
   font-size: 16px;
-  font-weight: 300;
+  font-weight: 400;
   color: #2c2c2c;
-  opacity: 0.7;
+  opacity: 1;
   margin-top: 16px;
   text-align: center;
+  text-shadow: 0 1px 6px rgba(255, 255, 255, 0.6);
+
 }
 
 .setup-footer a {
-  color: #5a7a3a;
-  font-weight: 400;
+  color: #3f5c26;
+  font-weight: 700;
   text-decoration: underline;
   cursor: pointer;
 }
@@ -398,13 +400,13 @@
 
 .avatar-arrow-btn {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1.5px solid #d9cfc0;
   background: #fffdf7;
   color: #2c2c2c;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -425,8 +427,8 @@
 
 .avatar-stage-wrap {
   position: relative;
-  width: 220px;
-  height: 220px;
+  width: 355px;
+  height: 360px;
 }
 
 .avatar-sculpture-stage {
@@ -456,7 +458,7 @@
   font-family: "Londrina Solid", cursive;
   font-size: 12px;
   font-weight: 300;
-  color: #2c2c2c;
+  color: #ad9d9d;
   opacity: 0.5;
   text-align: center;
   margin-bottom: 10px;
@@ -509,4 +511,113 @@
 .setup-child-preview canvas {
   width: 100% !important;
   height: 100% !important;
+}
+
+.setup-logo--corner {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  height: 44px;
+  margin-bottom: 0;
+  z-index: 10;
+}
+
+.setup-back--on-habitat {
+  opacity: 1;
+  background: rgba(255, 253, 247, 0.9);
+  padding: 8px 14px 8px 10px;
+  border-radius: 999px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+}
+
+.setup-back--on-habitat:hover {
+  background: #fff;
+}
+
+.setup-card--on-habitat .setup-progress {
+  margin-top: 0;
+}
+
+.avatar-habitat-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-family: "Londrina Solid", cursive;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  color: #fffdf7;
+  background: rgba(58, 92, 38, 0.6);
+  padding: 5px 14px;
+  border-radius: 999px;
+  margin: 0 auto 10px;
+  width: fit-content;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.avatar-habitat-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-family: "Londrina Solid", cursive;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  color: #fffdf7;
+  background: rgba(44, 44, 44, 0.55);
+  padding: 5px 14px;
+  border-radius: 999px;
+  margin: 0 auto 10px;
+  width: fit-content;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.setup-card--on-habitat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.avatar-select-heading {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fffdf7;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.65), 0 0 20px rgba(0, 0, 0, 0.35);
+  margin-bottom: 6px;
+}
+
+.avatar-drag-hint-icon {
+  position: absolute;
+  top: 78%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.avatar-drag-cursor {
+  color: #fffdf7;
+  fill: #fffdf7;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4));
+  animation: cursorSpinSweep 1.3s ease-in-out infinite;
+}
+
+@keyframes cursorSpinSweep {
+  0% {
+    transform: translateX(-20px) rotate(-14deg);
+    opacity: 0.45;
+  }
+
+  50% {
+    transform: translateX(20px) rotate(14deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(-20px) rotate(-14deg);
+    opacity: 0.45;
+  }
 }

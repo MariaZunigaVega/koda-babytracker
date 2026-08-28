@@ -10,7 +10,7 @@ import BunnyHabitat3D from "./habitats/BunnyHabitat3D";
 import PandaHabitat3D from "./habitats/PandaHabitat3D";
 import BearHabitat3D from "./habitats/BearHabitat3D";
 import KoalaHabitat3D from "./habitats/KoalaHabitat3D";
-import "../styling/habitatBackground.css";
+import "../styling/components/habitatBackground.css";
 
 useGLTF.preload(DEFAULT_MODEL);
 useGLTF.preload("/models/feeding.glb");
