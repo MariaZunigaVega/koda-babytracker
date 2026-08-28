@@ -1,7 +1,7 @@
 // Moon/sun toggle button for switching between light and dark mode (visual only, no theme wiring yet).
 
 import React from "react";
-import "../styling/darkModeToggle.css";
+import "../styling/components/darkModeToggle.css";
 
 const RAY_ANGLES = [45, 90, 135, 180, 225, 270, 315, 360];
 const CRATER_COUNT = 3;

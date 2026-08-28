@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { ClipboardList, Users } from "lucide-react";
-import "../styling/parentDashboard.css";
+import "../styling/pages/parentDashboard.css";
 import { getSelectedChildForUser } from "../utils/authStorage";
 import { API_URL } from "../config";
 import ActivitiesModal from "../components/modals/ActivitiesModal";

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import "../styling/setUp.css";
-import { API_URL } from "../config";
+import "../../styling/pages/setUp.css";
+import { API_URL } from "../../config";
 
 const ResetPassword = () => {
   const { token } = useParams(); // Grabs the secret token from the URL
@@ -34,6 +34,7 @@ const ResetPassword = () => {
 
   return (
     <div className="setup-container">
+      <img src="/assets/koda-logo.png" alt="Koda" className="setup-logo" onError={(e) => { e.target.style.visibility = "hidden"; }} />
       <div className="setup-card">
         <h1 className="setup-title">New Password</h1>
         <div className="setup-field">

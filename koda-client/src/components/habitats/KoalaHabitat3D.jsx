@@ -1,73 +1,101 @@
-// Koala Habitat **ROUGH draft**
-// what needs to be done/is being worked on: 
-//1. habitat looks a mess 2. create 3D assets for eucalyptus trees!!
-// 3. maybeee fix the koala model??, 4. cant see the koala on the screen for some reason
-import React, { useRef, useEffect, useState, useMemo } from "react";
+import React, { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, OrbitControls } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
-import "../../styling/habitats.css";
-import { DEFAULT_MODEL } from "../../constants/avatars";
-import { useGroundedOffset, seededRand, drawWrapped } from "./habitatUtils";
 
-const GROUND_TEX_SIZE = 512;
-function buildBushFloorTexture() {
+const KOALA_HEIGHT = 0.3;
+const KOALA_POSITION = [0.02, 0.72];
+const KOALA_MODEL_PATH = "/models/characters/koala.glb";
+
+const PALETTE = {
+  background: "#8fc7c0",
+  fog: "#a5d6ce",
+  sun: "#fffdf4",
+  rim: "#cfeaf0",
+  hemiSky: "#e8fbf6",
+  hemiGround: "#3d5f52",
+  groundBase: "hsl(150, 22%, 56%)",
+  bark: "#d9d2c4",
+  barkDark: "#b3a998",
+  leaf: "#8fc4a4",
+  leafDeep: "#5f9c86",
+  leafSilver: "#c7e3d6",
+  stone: "#a8a89c",
+  moss: "#7fb08c",
+};
+
+function seededRand(seed) {
+  const x = Math.sin(seed * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function drawWrapped(ctx, x, y, size, radius, draw) {
+  for (const ox of [-size, 0, size]) {
+    for (const oy of [-size, 0, size]) {
+      const px = x + ox;
+      const py = y + oy;
+      if (px < -radius || px > size + radius) continue;
+      if (py < -radius || py > size + radius) continue;
+      draw(px, py);
+    }
+  }
+}
+
+const TEX = 512;
+
+function buildGroundTexture() {
   const canvas = document.createElement("canvas");
-  canvas.width = GROUND_TEX_SIZE;
-  canvas.height = GROUND_TEX_SIZE;
+  canvas.width = TEX;
+  canvas.height = TEX;
   const ctx = canvas.getContext("2d");
+  ctx.fillStyle = PALETTE.groundBase;
+  ctx.fillRect(0, 0, TEX, TEX);
 
-  ctx.fillStyle = "hsl(38, 32%, 46%)";
-  ctx.fillRect(0, 0, GROUND_TEX_SIZE, GROUND_TEX_SIZE);
-
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 44; i++) {
     const seed = i * 61 + 3;
-    const bx = (seed * 37) % GROUND_TEX_SIZE;
-    const by = (seed * 53) % GROUND_TEX_SIZE;
-    const radius = 42 + (seed % 5) * 20;
-    const hue = 40 + (seed % 8) * 6;
-    const light = 40 + (seed % 6) * 4;
-    drawWrapped(ctx, bx, by, GROUND_TEX_SIZE, radius, (x, y) => {
-      const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
-      grad.addColorStop(0, `hsla(${hue}, 36%, ${light}%, 0.5)`);
-      grad.addColorStop(1, `hsla(${hue}, 36%, ${light}%, 0)`);
-      ctx.fillStyle = grad;
+    const bx = (seed * 37) % TEX;
+    const by = (seed * 53) % TEX;
+    const radius = 46 + (seed % 5) * 22;
+    const hue = 142 + (seed % 8) * 5;
+    const light = 50 + (seed % 6) * 5;
+    drawWrapped(ctx, bx, by, TEX, radius, (x, y) => {
+      const g = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      g.addColorStop(0, `hsla(${hue}, 32%, ${light}%, 0.5)`);
+      g.addColorStop(1, `hsla(${hue}, 32%, ${light}%, 0)`);
+      ctx.fillStyle = g;
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, Math.PI * 2);
       ctx.fill();
     });
   }
 
-  for (let i = 0; i < 520; i++) {
+  for (let i = 0; i < 480; i++) {
     const seed = i * 17 + 9;
-    const bx = (seed * 31) % GROUND_TEX_SIZE;
-    const by = (seed * 47) % GROUND_TEX_SIZE;
-    const hue = 62 + (seed % 10) * 3;
-    const light = 42 + (seed % 8) * 3;
-    ctx.fillStyle = `hsla(${hue}, 34%, ${light}%, 0.45)`;
-    drawWrapped(ctx, bx, by, GROUND_TEX_SIZE, 6, (x, y) => {
+    const bx = (seed * 31) % TEX;
+    const by = (seed * 47) % TEX;
+    ctx.fillStyle = `hsla(${138 + (seed % 10) * 4}, 30%, ${44 + (seed % 8) * 4}%, 0.5)`;
+    drawWrapped(ctx, bx, by, TEX, 6, (x, y) => {
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate((seed % 12) * 0.26);
       ctx.beginPath();
-      ctx.ellipse(0, 0, 1.0, 3.6, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, 1.2, 5.0, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     });
   }
 
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 130; i++) {
     const seed = i * 89 + 13;
-    const lx = (seed * 23) % GROUND_TEX_SIZE;
-    const ly = (seed * 41) % GROUND_TEX_SIZE;
-    const hue = 18 + (seed % 6) * 4;
-    drawWrapped(ctx, lx, ly, GROUND_TEX_SIZE, 7, (x, y) => {
+    const bx = (seed * 23) % TEX;
+    const by = (seed * 41) % TEX;
+    drawWrapped(ctx, bx, by, TEX, 10, (x, y) => {
       ctx.save();
       ctx.translate(x, y);
-      ctx.rotate((seed % 20) * 0.31);
-      ctx.fillStyle = `hsla(${hue}, 46%, ${28 + (seed % 5) * 4}%, 0.8)`;
+      ctx.rotate((seed % 14) * 0.22);
+      ctx.fillStyle = i % 3 === 0 ? "rgba(200,232,216,0.7)" : "rgba(126,172,146,0.6)";
       ctx.beginPath();
-      ctx.ellipse(0, 0, 5.5, 1.4, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, 7.5, 2.4, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     });
@@ -76,191 +104,166 @@ function buildBushFloorTexture() {
   const tex = new THREE.CanvasTexture(canvas);
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.RepeatWrapping;
-  tex.magFilter = THREE.LinearFilter;
   tex.minFilter = THREE.LinearMipmapLinearFilter;
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
 }
 
-function Ground({ size = 28 }) {
-  const tex = useMemo(() => buildBushFloorTexture(), []);
-  const repeats = size / 3.2;
+const GROUND_SIZE = 9;
+
+function Ground() {
+  const tex = useMemo(() => buildGroundTexture(), []);
   useEffect(() => {
-    tex.repeat.set(repeats, repeats);
-  }, [tex, repeats]);
+    tex.repeat.set(GROUND_SIZE / 2.4, GROUND_SIZE / 2.4);
+  }, [tex]);
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-      <planeGeometry args={[size, size]} />
+      <planeGeometry args={[GROUND_SIZE, GROUND_SIZE]} />
       <meshStandardMaterial map={tex} />
     </mesh>
   );
 }
 
-function Clearing({ position = [0, -1.2], radius = 2.1 }) {
-  return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[position[0], 0.012, position[1]]}>
-      <circleGeometry args={[radius, 32]} />
-      <meshStandardMaterial color="#a9895f" roughness={0.95} />
-    </mesh>
-  );
+function buildBarkTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 48;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = PALETTE.bark;
+  ctx.fillRect(0, 0, 48, 256);
+  for (let i = 0; i < 26; i++) {
+    const seed = i * 13 + 5;
+    ctx.fillStyle = `rgba(150,140,124,${0.15 + (seed % 4) * 0.08})`;
+    const x = (seed * 17) % 48;
+    ctx.fillRect(x, (seed * 29) % 256, 2 + (seed % 4), 40 + (seed % 60));
+  }
+  for (let i = 0; i < 12; i++) {
+    const seed = i * 31 + 7;
+    ctx.fillStyle = "rgba(178,205,190,0.35)";
+    ctx.fillRect((seed * 11) % 48, (seed * 37) % 256, 6, 18);
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
 }
 
-const LEAF_CLUSTER_COLORS = ["#93b076", "#a3c084", "#87a86c"];
-
-function LeafCluster({ position, scale = 1, colorIndex = 0 }) {
-  return (
-    <group position={position} scale={scale}>
-      <mesh castShadow receiveShadow>
-        <icosahedronGeometry args={[0.55, 1]} />
-        <meshStandardMaterial color={LEAF_CLUSTER_COLORS[colorIndex % 3]} roughness={0.85} />
-      </mesh>
-      <mesh position={[0.32, -0.12, 0.18]} castShadow receiveShadow>
-        <icosahedronGeometry args={[0.34, 1]} />
-        <meshStandardMaterial color={LEAF_CLUSTER_COLORS[(colorIndex + 1) % 3]} roughness={0.85} />
-      </mesh>
-      <mesh position={[-0.3, -0.08, -0.2]} castShadow receiveShadow>
-        <icosahedronGeometry args={[0.3, 1]} />
-        <meshStandardMaterial color={LEAF_CLUSTER_COLORS[(colorIndex + 2) % 3]} roughness={0.85} />
-      </mesh>
-    </group>
-  );
-}
-
-function EucalyptusTree({ position, rotation = 0, scale = 1 }) {
-  return (
-    <group position={[position[0], 0, position[1]]} rotation={[0, rotation, 0]} scale={scale}>
-      <mesh position={[0, 1.4, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.1, 0.18, 2.8, 8]} />
-        <meshStandardMaterial color="#c7b291" roughness={0.9} />
-      </mesh>
-      <mesh position={[0.22, 2.5, 0.1]} rotation={[0, 0, 0.5]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.05, 0.09, 1.3, 6]} />
-        <meshStandardMaterial color="#c7b291" roughness={0.9} />
-      </mesh>
-      <mesh position={[-0.2, 2.35, -0.15]} rotation={[0, 0, -0.45]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.05, 0.08, 1.1, 6]} />
-        <meshStandardMaterial color="#c7b291" roughness={0.9} />
-      </mesh>
-      <LeafCluster position={[0, 3.0, 0]} scale={1.1} colorIndex={0} />
-      <LeafCluster position={[0.7, 3.05, 0.35]} scale={0.85} colorIndex={1} />
-      <LeafCluster position={[-0.65, 2.9, -0.4]} scale={0.8} colorIndex={2} />
-    </group>
-  );
-}
-
-function generateBushGroves() {
-  const placements = [];
-  const rings = [
-    { count: 6, rMin: 4.6, rMax: 5.8, scaleMin: 0.9, scaleMax: 1.2 },
-    { count: 8, rMin: 6.4, rMax: 8.2, scaleMin: 1.0, scaleMax: 1.5 },
-    { count: 10, rMin: 8.8, rMax: 11.5, scaleMin: 1.1, scaleMax: 1.9 },
-  ];
-  rings.forEach(({ count, rMin, rMax, scaleMin, scaleMax }) => {
-    for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
-      const radius = rMin + Math.random() * (rMax - rMin);
-      placements.push({
-        position: [Math.cos(angle) * radius, Math.sin(angle) * radius - 1.2],
-        rotation: Math.random() * Math.PI * 2,
-        scale: scaleMin + Math.random() * (scaleMax - scaleMin),
-      });
+function GumTree({ position, height, lean = 0, seed = 1 }) {
+  const bark = useMemo(() => buildBarkTexture(), []);
+  const canopy = useRef(null);
+  const phase = useMemo(() => seededRand(seed) * 8, [seed]);
+  useFrame(({ clock }) => {
+    if (canopy.current) {
+      canopy.current.rotation.z = Math.sin(clock.getElapsedTime() * 0.45 + phase) * 0.03;
     }
   });
-  return placements;
-}
-const GROVE_PLACEMENTS = generateBushGroves();
-
-function EucalyptusGrove() {
-  return (
-    <>
-      {GROVE_PLACEMENTS.map((t, i) => (
-        <EucalyptusTree key={i} {...t} />
-      ))}
-    </>
+  const clusters = useMemo(
+    () =>
+      Array.from({ length: 7 }).map((_, i) => {
+        const a = (i / 7) * Math.PI * 2 + phase;
+        const r = 0.22 + seededRand(seed + i * 3) * 0.3;
+        return {
+          position: [Math.cos(a) * r, height * (0.82 + seededRand(seed + i) * 0.22), Math.sin(a) * r],
+          scale: 0.26 + seededRand(seed + i * 7) * 0.2,
+          color: i % 3 === 0 ? PALETTE.leafSilver : i % 3 === 1 ? PALETTE.leaf : PALETTE.leafDeep,
+        };
+      }),
+    [height, phase, seed],
   );
-}
-
-const HOME_TREE_BASE = [0, -1.2];
-const HOME_BRANCH_POSITION = [0.62, 1.72, -1.55];
-
-function HomeEucalyptusTree() {
   return (
-    <group position={[HOME_TREE_BASE[0], 0, HOME_TREE_BASE[1]]}>
-      <mesh position={[0, 1.9, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.17, 0.3, 3.8, 10]} />
-        <meshStandardMaterial color="#cdb896" roughness={0.9} />
+    <group position={position} rotation={[0, 0, lean]}>
+      <mesh position={[0, height / 2, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.055, 0.11, height, 10]} />
+        <meshStandardMaterial map={bark} roughness={0.9} />
       </mesh>
-
-      <mesh position={[0.45, 1.55, 0]} rotation={[0, 0, 0.55]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.06, 0.11, 1.4, 8]} />
-        <meshStandardMaterial color="#cdb896" roughness={0.9} />
+      <mesh position={[0.16, height * 0.72, 0]} rotation={[0, 0, -0.7]} castShadow>
+        <cylinderGeometry args={[0.025, 0.04, 0.5, 8]} />
+        <meshStandardMaterial color={PALETTE.barkDark} roughness={0.9} />
       </mesh>
-      <mesh position={[-0.3, 2.7, 0.25]} rotation={[0.2, 0, -0.5]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.06, 0.11, 1.5, 8]} />
-        <meshStandardMaterial color="#cdb896" roughness={0.9} />
+      <mesh position={[-0.15, height * 0.8, 0.05]} rotation={[0, 0, 0.65]} castShadow>
+        <cylinderGeometry args={[0.022, 0.035, 0.44, 8]} />
+        <meshStandardMaterial color={PALETTE.barkDark} roughness={0.9} />
       </mesh>
-      <mesh position={[0.1, 2.9, -0.35]} rotation={[-0.35, 0, 0.15]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.05, 0.09, 1.2, 8]} />
-        <meshStandardMaterial color="#cdb896" roughness={0.9} />
-      </mesh>
-
-      <LeafCluster position={[0, 4.0, 0]} scale={1.5} colorIndex={0} />
-      <LeafCluster position={[-0.75, 3.7, 0.6]} scale={1.1} colorIndex={1} />
-      <LeafCluster position={[0.85, 3.55, -0.5]} scale={1.05} colorIndex={2} />
-      <LeafCluster position={[0.95, 1.9, -0.7]} scale={0.7} colorIndex={1} />
-      <LeafCluster position={[-0.6, 3.15, 0.85]} scale={0.8} colorIndex={0} />
-    </group>
-  );
-}
-
-function RockCluster({ position, scale = 1, rotation = 0 }) {
-  return (
-    <group position={position} rotation={[0, rotation, 0]} scale={scale}>
-      <mesh position={[0, 0.22, 0]} rotation={[0.15, 0.6, 0.05]} castShadow receiveShadow>
-        <dodecahedronGeometry args={[0.32, 1]} />
-        <meshStandardMaterial color="#b78f66" roughness={0.9} />
-      </mesh>
-      <mesh position={[0.2, 0.12, 0.13]} rotation={[0.3, 1.2, 0.1]} castShadow receiveShadow>
-        <dodecahedronGeometry args={[0.16, 1]} />
-        <meshStandardMaterial color="#c19b71" roughness={0.9} />
-      </mesh>
-      <mesh position={[-0.15, 0.08, -0.1]} rotation={[0.1, 0.4, 0.2]} castShadow receiveShadow>
-        <dodecahedronGeometry args={[0.11, 1]} />
-        <meshStandardMaterial color="#a9835c" roughness={0.9} />
-      </mesh>
-    </group>
-  );
-}
-
-const ROCK_PLACEMENTS = [
-  { position: [3.2, 0, -0.4], scale: 0.85, rotation: 0.5 },
-  { position: [-3.4, 0, 0.6], scale: 0.7, rotation: 2.2 },
-];
-
-const WILDFLOWER_COLORS = ["#ff7a4a", "#ffd23f", "#f4efe4", "#e85d3a"];
-const WILDFLOWER_PLACEMENTS = [
-  { position: [2.0, 1.6], color: 0 },
-  { position: [-2.3, 1.1], color: 1 },
-  { position: [2.9, -1.4], color: 2 },
-  { position: [-2.8, -1.0], color: 3 },
-  { position: [1.2, -2.9], color: 1 },
-  { position: [-1.4, -3.1], color: 0 },
-  { position: [3.6, 1.9], color: 2 },
-  { position: [-3.7, 1.6], color: 3 },
-];
-
-function Wildflowers() {
-  return (
-    <>
-      {WILDFLOWER_PLACEMENTS.map((f, i) => (
-        <group key={i} position={[f.position[0], 0, f.position[1]]}>
-          <mesh position={[0, 0.13, 0]} castShadow>
-            <cylinderGeometry args={[0.018, 0.018, 0.26, 5]} />
-            <meshStandardMaterial color="#5c6b3f" />
+      <group ref={canopy}>
+        {clusters.map((c, i) => (
+          <mesh key={i} position={c.position} scale={[c.scale, c.scale * 0.72, c.scale]} castShadow>
+            <icosahedronGeometry args={[1, 1]} />
+            <meshStandardMaterial color={c.color} roughness={0.85} flatShading />
           </mesh>
-          <mesh position={[0, 0.28, 0]} castShadow>
-            <sphereGeometry args={[0.07, 8, 8]} />
-            <meshStandardMaterial color={WILDFLOWER_COLORS[f.color]} />
+        ))}
+      </group>
+    </group>
+  );
+}
+
+const TREES = [
+  { position: [-1.35, 0, -1.35], height: 2.1, lean: 0.04, seed: 3 },
+  { position: [1.4, 0, -1.5], height: 2.4, lean: -0.05, seed: 11 },
+  { position: [-0.15, 0, -1.95], height: 2.7, lean: 0.02, seed: 19 },
+  { position: [-2.3, 0, -0.45], height: 1.8, lean: 0.06, seed: 27 },
+  { position: [2.3, 0, -0.3], height: 1.9, lean: -0.04, seed: 35 },
+];
+
+function LeafSprig({ position, rotation, scale = 1 }) {
+  const ref = useRef(null);
+  const phase = useMemo(() => Math.random() * 8, []);
+  useFrame(({ clock }) => {
+    if (ref.current) ref.current.rotation.z = rotation + Math.sin(clock.getElapsedTime() + phase) * 0.06;
+  });
+  return (
+    <group ref={ref} position={position} scale={scale}>
+      <mesh position={[0, 0.07, 0]}>
+        <cylinderGeometry args={[0.006, 0.008, 0.15, 6]} />
+        <meshStandardMaterial color="#8fa38c" roughness={0.9} />
+      </mesh>
+      {[0, 1, 2, 3].map((i) => (
+        <mesh
+          key={i}
+          position={[i % 2 ? 0.045 : -0.045, 0.06 + i * 0.03, 0]}
+          rotation={[0, 0, i % 2 ? -0.8 : 0.8]}
+          scale={[1, 2.4, 1]}
+          castShadow
+        >
+          <sphereGeometry args={[0.022, 8, 6]} />
+          <meshStandardMaterial color={i % 2 ? PALETTE.leaf : PALETTE.leafDeep} roughness={0.8} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+const SPRIGS = (() => {
+  const out = [];
+  for (let i = 0; i < 16; i++) {
+    const seed = i * 23 + 5;
+    const x = (seededRand(seed) - 0.5) * 3.2;
+    const z = -0.4 + (seededRand(seed * 1.7) - 0.5) * 2.6;
+    if (Math.hypot(x - KOALA_POSITION[0], z - KOALA_POSITION[1]) < 0.42) continue;
+    out.push({ position: [x, 0, z], rotation: (seededRand(seed * 2.3) - 0.5) * 0.4, scale: 0.8 + seededRand(seed * 3.1) * 0.7 });
+  }
+  return out;
+})();
+
+const STONES = [
+  { position: [1.1, 0.07, 0.2], scale: 0.14, rotation: 0.8 },
+  { position: [-1.35, 0.06, 0.85], scale: 0.12, rotation: 2.0 },
+  { position: [0.5, 0.05, 1.4], scale: 0.1, rotation: 1.4 },
+  { position: [-0.55, 0.06, 1.05], scale: 0.11, rotation: 0.3 },
+];
+
+function Stones() {
+  return (
+    <>
+      {STONES.map((s, i) => (
+        <group key={i} position={s.position} rotation={[0.1, s.rotation, 0.07]} scale={s.scale}>
+          <mesh castShadow receiveShadow>
+            <dodecahedronGeometry args={[1, 0]} />
+            <meshStandardMaterial color={PALETTE.stone} roughness={0.9} />
+          </mesh>
+          <mesh position={[0.03, 0.5, -0.04]} scale={[0.74, 0.2, 0.68]}>
+            <sphereGeometry args={[1, 12, 8]} />
+            <meshStandardMaterial color={PALETTE.moss} roughness={1} />
           </mesh>
         </group>
       ))}
@@ -268,191 +271,120 @@ function Wildflowers() {
   );
 }
 
-const GRASS_TUFT_PLACEMENTS = Array.from({ length: 22 }).map((_, i) => {
-  const angle = seededRand(i * 3.1) * Math.PI * 2;
-  const r = 1.6 + seededRand(i * 7.7) * 3.4;
-  return {
-    position: [Math.cos(angle) * r, Math.sin(angle) * r - 0.8],
-    rotation: seededRand(i * 5.3) * Math.PI * 2,
-    scale: 0.6 + seededRand(i * 9.1) * 0.5,
-  };
-});
-
-function GrassTuft({ position, rotation, scale }) {
-  return (
-    <group position={[position[0], 0, position[1]]} rotation={[0, rotation, 0]} scale={scale}>
-      {[-0.05, 0, 0.05].map((dx, i) => (
-        <mesh key={i} position={[dx, 0.08, 0]} rotation={[0, 0, dx * 2.5]} castShadow>
-          <coneGeometry args={[0.018, 0.18, 5]} />
-          <meshStandardMaterial color={i === 1 ? "#9e9a4e" : "#aca85e"} roughness={0.85} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-function GrassTufts() {
-  return (
-    <>
-      {GRASS_TUFT_PLACEMENTS.map((t, i) => (
-        <GrassTuft key={i} {...t} />
-      ))}
-    </>
-  );
-}
-
-const GUMNUT_COLOR = "#7a5236";
-const GUMNUT_CLUSTERS = [
-  { position: [0.9, -0.5], count: 3 },
-  { position: [-1.1, -1.6], count: 2 },
-  { position: [1.6, -2.2], count: 3 },
-];
-function gumnutSeed(position, index, offset) {
-  return seededRand((position[0] * 131.1 + position[1] * 71.7 + index * 33.3 + offset) * 12.9898);
-}
-function GumnutCluster({ position, count }) {
-  const nuts = useMemo(() => {
-    return Array.from({ length: count }).map((_, i) => {
-      const r1 = gumnutSeed(position, i, 1);
-      const r2 = gumnutSeed(position, i, 2);
-      return {
-        offset: [(r1 - 0.5) * 0.35, (r2 - 0.5) * 0.35],
-        radius: 0.045 + r2 * 0.03,
-        rotation: r1 * Math.PI * 2,
-      };
-    });
-  }, [position, count]);
-  return (
-    <group position={[position[0], 0, position[1]]}>
-      {nuts.map((n, i) => (
-        <mesh key={i} position={[n.offset[0], n.radius, n.offset[1]]} rotation={[0.2, n.rotation, 0]} castShadow receiveShadow>
-          <icosahedronGeometry args={[n.radius, 0]} />
-          <meshStandardMaterial color={GUMNUT_COLOR} roughness={0.8} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-function Gumnuts() {
-  return (
-    <>
-      {GUMNUT_CLUSTERS.map((c, i) => (
-        <GumnutCluster key={i} {...c} />
-      ))}
-    </>
-  );
-}
-
-function useFreeRoam({ bounds = 3, minHeight = 0.8, maxHeight = 1.6, speed = 0.5 } = {}) {
-  const state = useMemo(() => {
-    const randPoint = () =>
-      new THREE.Vector3(
-        (Math.random() - 0.5) * bounds * 2,
-        minHeight + Math.random() * (maxHeight - minHeight),
-        (Math.random() - 0.5) * bounds * 2 - 1
-      );
-    return { pos: randPoint(), target: randPoint() };
-  }, [bounds, minHeight, maxHeight]);
-
-  const step = (delta) => {
-    const dir = state.target.clone().sub(state.pos);
-    const dist = dir.length();
-    if (dist < 0.15) {
-      state.target.set(
-        (Math.random() - 0.5) * bounds * 2,
-        minHeight + Math.random() * (maxHeight - minHeight),
-        (Math.random() - 0.5) * bounds * 2 - 1
-      );
-    } else {
-      dir.normalize();
-      state.pos.addScaledVector(dir, Math.min(speed * delta, dist));
-    }
-    return state.pos;
-  };
-
-  return { step };
-}
-
-const BUTTERFLY_COLORS = ["#ff9f4a", "#f2f2f2", "#5fa8d3"];
-function Butterfly({ bounds, speed, height, colorIndex }) {
-  const group = useRef();
-  const wingL = useRef();
-  const wingR = useRef();
-  const { step } = useFreeRoam({ bounds, minHeight: height - 0.15, maxHeight: height + 0.25, speed });
-  useFrame(({ clock }, delta) => {
-    const pos = step(delta);
-    const t = clock.getElapsedTime();
-    if (group.current) {
-      group.current.position.copy(pos);
-      group.current.rotation.y = Math.atan2(
-        group.current.position.x - pos.x + 0.001,
-        1
-      );
-    }
-    const flap = Math.sin(t * 14) * 0.9;
-    if (wingL.current) wingL.current.rotation.y = flap;
-    if (wingR.current) wingR.current.rotation.y = -flap;
+function WaterDish() {
+  const ref = useRef(null);
+  useFrame(({ clock }) => {
+    const m = ref.current?.material;
+    if (m) m.opacity = 0.85 + Math.sin(clock.getElapsedTime() * 0.9) * 0.06;
   });
-  const color = BUTTERFLY_COLORS[colorIndex % BUTTERFLY_COLORS.length];
   return (
-    <group ref={group}>
-      <mesh ref={wingL} position={[-0.02, 0, 0]}>
-        <planeGeometry args={[0.09, 0.07]} />
-        <meshStandardMaterial color={color} side={THREE.DoubleSide} roughness={0.6} />
+    <group position={[-0.85, 0, 0.35]}>
+      <mesh position={[0, 0.035, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.22, 0.18, 0.07, 20]} />
+        <meshStandardMaterial color={PALETTE.stone} roughness={0.9} />
       </mesh>
-      <mesh ref={wingR} position={[0.02, 0, 0]}>
-        <planeGeometry args={[0.09, 0.07]} />
-        <meshStandardMaterial color={color} side={THREE.DoubleSide} roughness={0.6} />
+      <mesh ref={ref} position={[0, 0.072, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.18, 24]} />
+        <meshBasicMaterial color="#a8e4e0" transparent opacity={0.88} />
       </mesh>
     </group>
   );
 }
 
-function PerchedCharacter({ modelPath, branchPosition, scale = 2.2 }) {
-  const group = useRef();
-  const { scene } = useGLTF(modelPath);
-  const object = useMemo(() => scene.clone(), [scene]);
-  const offset = useGroundedOffset(object);
+function MistWisp({ radius, speed, phase, height }) {
+  const ref = useRef(null);
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    const t = clock.getElapsedTime() * speed + phase;
+    ref.current.position.set(Math.cos(t) * radius, height, Math.sin(t * 0.8) * radius * 0.6 - 0.4);
+    ref.current.material.opacity = 0.1 + Math.abs(Math.sin(t * 0.6)) * 0.14;
+  });
+  return (
+    <mesh ref={ref} scale={[1.7, 0.5, 1]}>
+      <sphereGeometry args={[0.4, 12, 8]} />
+      <meshBasicMaterial color="#eafbf7" transparent opacity={0.15} depthWrite={false} />
+    </mesh>
+  );
+}
 
+function Mist() {
+  const wisps = useMemo(
+    () =>
+      Array.from({ length: 6 }).map((_, i) => ({
+        radius: 1.0 + seededRand(i * 3.3) * 1.3,
+        speed: 0.1 + seededRand(i * 5.5) * 0.08,
+        phase: seededRand(i * 7.7) * 8,
+        height: 0.2 + seededRand(i * 9.1) * 0.5,
+      })),
+    [],
+  );
+  return (
+    <>
+      {wisps.map((w, i) => (
+        <MistWisp key={i} {...w} />
+      ))}
+    </>
+  );
+}
+
+function useNormalizedModel(size) {
+  const gltf = useGLTF(KOALA_MODEL_PATH);
+  return useMemo(() => {
+    const clone = gltf.scene.clone(true);
+    const box = new THREE.Box3().setFromObject(clone);
+    const dim = box.getSize(new THREE.Vector3());
+    const scale = size / (dim.y || 1);
+    const center = box.getCenter(new THREE.Vector3());
+    clone.position.set(-center.x, -box.min.y, -center.z);
+    clone.scale.setScalar(scale);
+    clone.traverse((o) => {
+      if (o.isMesh) {
+        o.castShadow = true;
+        o.receiveShadow = true;
+      }
+    });
+    const wrapper = new THREE.Group();
+    wrapper.add(clone);
+    return wrapper;
+  }, [gltf.scene, size]);
+}
+
+function Koala({ position = KOALA_POSITION }) {
+  const group = useRef(null);
+  const body = useRef(null);
   const nextGlance = useRef(1 + Math.random() * 2);
-  const glanceOffset = useRef(0);
-  const nextShift = useRef(4 + Math.random() * 3);
-  const shiftOffset = useRef([0, 0]);
+  const glance = useRef(0);
+  const model = useNormalizedModel(KOALA_HEIGHT);
+
+  useLayoutEffect(() => {
+    if (group.current) group.current.rotation.y = 0;
+  }, [model]);
 
   useFrame(({ clock }) => {
     if (!group.current) return;
     const t = clock.getElapsedTime();
-
     if (t > nextGlance.current) {
-      nextGlance.current = t + 2 + Math.random() * 2.5;
-      glanceOffset.current = (Math.random() - 0.5) * 0.4;
+      nextGlance.current = t + 2.4 + Math.random() * 2.5;
+      glance.current = (Math.random() - 0.5) * 0.35;
     }
-    if (t > nextShift.current) {
-      nextShift.current = t + 5 + Math.random() * 4;
-      shiftOffset.current = [(Math.random() - 0.5) * 0.08, (Math.random() - 0.5) * 0.06];
+    group.current.rotation.y += (glance.current - group.current.rotation.y) * 0.035;
+    group.current.position.y = Math.sin(t * 1.0) * 0.012;
+    if (body.current) {
+      const breathe = 1 + Math.sin(t * 1.6) * 0.018;
+      body.current.scale.set(1 / Math.sqrt(breathe), breathe, 1 / Math.sqrt(breathe));
     }
-
-    let angleDelta = glanceOffset.current - group.current.rotation.y;
-    while (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
-    while (angleDelta < -Math.PI) angleDelta += Math.PI * 2;
-    group.current.rotation.y += angleDelta * 0.03;
-
-    const breathe = Math.sin(t * 1.1) * 0.015;
-    group.current.position.set(
-      branchPosition[0] + shiftOffset.current[0],
-      branchPosition[1] + breathe,
-      branchPosition[2] + shiftOffset.current[1]
-    );
   });
 
   return (
-    <group ref={group} position={branchPosition}>
-      <primitive object={object} scale={scale} position={[offset[0] * scale, offset[1] * scale, offset[2] * scale]} />
+    <group ref={group} position={[position[0], 0, position[1]]}>
+      <group ref={body}>
+        <primitive object={model} />
+      </group>
     </group>
   );
 }
 
-class CharacterErrorBoundary extends React.Component {
+class KoalaErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
     this.state = { failed: false };
@@ -460,97 +392,74 @@ class CharacterErrorBoundary extends React.Component {
   static getDerivedStateFromError() {
     return { failed: true };
   }
+  componentDidCatch(error) {
+    console.error("Koala model failed to load:", error);
+  }
   render() {
-    if (this.state.failed) {
-      return <PerchedCharacter modelPath={DEFAULT_MODEL} branchPosition={this.props.branchPosition} />;
-    }
+    if (this.state.failed) return <Koala position={this.props.position} />;
     return this.props.children;
   }
 }
 
-const ISO_DISTANCE = 9.5;
-const ISO_ELEVATION = Math.atan(1 / Math.sqrt(2)) + 0.08;
-const ISO_YAW = 0;
+const ISO_DISTANCE = 4.4;
+const ISO_ELEVATION = Math.atan(1 / Math.sqrt(2)) - 0.05;
+const ISO_ZOOM = 320;
 const ISO_POSITION = [
-  ISO_DISTANCE * Math.cos(ISO_ELEVATION) * Math.sin(ISO_YAW),
+  0,
   ISO_DISTANCE * Math.sin(ISO_ELEVATION),
-  ISO_DISTANCE * Math.cos(ISO_ELEVATION) * Math.cos(ISO_YAW),
+  ISO_DISTANCE * Math.cos(ISO_ELEVATION),
 ];
 
-const KoalaHabitat3D = ({ characterModel }) => {
+export function KoalaHabitat3D() {
+  useEffect(() => {
+    useGLTF.preload(KOALA_MODEL_PATH);
+  }, []);
+
   return (
-    <div className="habitat-canvas-wrap habitat-canvas-wrap--no-touch-scroll">
-      <Canvas
-        shadows
-        orthographic
-        camera={{ position: ISO_POSITION, zoom: 52, near: 0.1, far: 60 }}
-        gl={{ toneMappingExposure: 1.15 }}
-        style={{ touchAction: "none" }}
-        onCreated={({ gl }) => {
-          gl.domElement.style.touchAction = "none";
-        }}
-      >
-        <color attach="background" args={["#bfe3f7"]} />
-        <fog attach="fog" args={["#bfe3f7", 16, 34]} />
+    <Canvas
+      shadows
+      orthographic
+      camera={{ position: ISO_POSITION, zoom: ISO_ZOOM, near: 0.1, far: 60 }}
+      gl={{ toneMappingExposure: 1.15 }}
+      dpr={[1, 2]}
+    >
+      <color attach="background" args={[PALETTE.background]} />
+      <fog attach="fog" args={[PALETTE.fog, 5, 13]} />
 
-        <OrbitControls
-          makeDefault
-          target={[0.3, 1.6, -1.4]}
-          enableDamping
-          dampingFactor={0.08}
-          enablePan
-          screenSpacePanning
-          panSpeed={1}
-          enableRotate
-          rotateSpeed={0.6}
-          minPolarAngle={0.55}
-          maxPolarAngle={1.1}
-          minZoom={34}
-          maxZoom={90}
-          mouseButtons={{ LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }}
-          touches={{ ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN }}
-        />
+      <ambientLight intensity={1.0} />
+      <directionalLight
+        position={[5, 8, 3]}
+        intensity={1.45}
+        color={PALETTE.sun}
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-left={-5}
+        shadow-camera-right={5}
+        shadow-camera-top={5}
+        shadow-camera-bottom={-5}
+      />
+      <directionalLight position={[-5, 3, -4]} intensity={0.32} color={PALETTE.rim} />
+      <hemisphereLight args={[PALETTE.hemiSky, PALETTE.hemiGround, 1.0]} />
 
-        <ambientLight intensity={0.9} />
-        <directionalLight
-          position={[6, 10, 4]}
-          intensity={2.5}
-          color="#fff4d6"
-          castShadow
-          shadow-mapSize={[2048, 2048]}
-          shadow-camera-left={-8}
-          shadow-camera-right={8}
-          shadow-camera-top={8}
-          shadow-camera-bottom={-8}
-        />
-        <directionalLight position={[-6, 4, -5]} intensity={0.3} color="#cfe8ff" />
-        <hemisphereLight args={["#eaf6ff", "#7a6a45", 1.1]} />
-
-        <React.Suspense fallback={null}>
+      <Suspense fallback={null}>
+        <group position={[0, -0.18, 0]}>
           <Ground />
-          <Clearing />
-
-          <HomeEucalyptusTree />
-          <EucalyptusGrove />
-
-          <RockCluster {...ROCK_PLACEMENTS[0]} />
-          <RockCluster {...ROCK_PLACEMENTS[1]} />
-
-          <Wildflowers />
-          <GrassTufts />
-          <Gumnuts />
-
-          <Butterfly bounds={2.6} speed={0.55} height={1.3} colorIndex={0} />
-          <Butterfly bounds={2.0} speed={0.6} height={1.5} colorIndex={1} />
-          <Butterfly bounds={3.0} speed={0.5} height={1.1} colorIndex={2} />
-
-          <CharacterErrorBoundary branchPosition={HOME_BRANCH_POSITION}>
-            <PerchedCharacter modelPath={characterModel} branchPosition={HOME_BRANCH_POSITION} />
-          </CharacterErrorBoundary>
-        </React.Suspense>
-      </Canvas>
-    </div>
+          {TREES.map((t, i) => (
+            <GumTree key={`t${i}`} {...t} />
+          ))}
+          <WaterDish />
+          {SPRIGS.map((s, i) => (
+            <LeafSprig key={`s${i}`} {...s} />
+          ))}
+          <Stones />
+          <Mist />
+          <KoalaErrorBoundary position={KOALA_POSITION}>
+            <Koala position={KOALA_POSITION} />
+          </KoalaErrorBoundary>
+        </group>
+      </Suspense>
+    </Canvas>
   );
-};
+}
 
 export default KoalaHabitat3D;

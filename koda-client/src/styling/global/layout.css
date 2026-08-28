@@ -1,3 +1,4 @@
+/* App shell layout: fixed header, fixed bottom nav, and the mobile frame wrapper shared by every page. */
 .layout-mobile-frame {
   width: 100%;
   min-height: 100vh;

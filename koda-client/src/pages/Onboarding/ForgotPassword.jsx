@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
-import "../styling/setUp.css"; // Reuse your existing styling
-import { API_URL } from "../config";
+import "../../styling/pages/setUp.css" // Reuse your existing styling
+import { API_URL } from "../../config";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();

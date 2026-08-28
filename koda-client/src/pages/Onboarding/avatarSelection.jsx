@@ -1,31 +1,36 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import "../styling/setUp.css";
-import { AVATARS } from "../constants/avatars";
+import "../../styling/pages/setUp.css";
+import { AVATARS } from "../../constants/avatars";
+import { ChevronLeft, MapPin, Pointer } from "lucide-react";
+import AvatarHabitatBackdrop from "../../components/AvatarHabitatBackdrop";
+
 
 const AvatarSelection = () => {
   const navigate = useNavigate();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [modelLoading, setModelLoading] = useState(true);
-
   const mountRef = useRef(null);
   const sceneRef = useRef(null);
-  const rendererRef = useRef(null);
-  const cameraRef = useRef(null);
   const currentModel = useRef(null);
   const animFrame = useRef(null);
   const bounceStart = useRef(null);
   const loader = useRef(new GLTFLoader());
   const isDragging = useRef(false);
   const lastPointerX = useRef(0);
-  const dragRotation = useRef(0);
+  const [showDragHint, setShowDragHint] = useState(true);
+  const restRotationY = useRef(0);
+  const hintActiveRef = useRef(true);
 
   const selected = AVATARS[selectedIndex];
 
   // three.js boot 
+  useEffect(() => {
+    hintActiveRef.current = showDragHint;
+  }, [showDragHint]);
+
   useEffect(() => {
     const mount = mountRef.current;
     const w = mount.clientWidth;
@@ -36,14 +41,12 @@ const AvatarSelection = () => {
 
     const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
     camera.position.set(0, 0.5, 5);
-    cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(w, h);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     mount.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
 
     scene.add(new THREE.AmbientLight(0xffffff, 2.0));
     const sun = new THREE.DirectionalLight(0xffffff, 1.0);
@@ -55,7 +58,6 @@ const AvatarSelection = () => {
 
     const animate = () => {
       animFrame.current = requestAnimationFrame(animate);
-
       if (currentModel.current) {
         const baseY = currentModel.current.userData.baseY ?? 0;
         let y = baseY + Math.sin(Date.now() * 0.002) * 0.08;
@@ -71,6 +73,13 @@ const AvatarSelection = () => {
         }
 
         currentModel.current.position.y = y;
+
+        if (hintActiveRef.current && !isDragging.current) {
+          const wiggle = Math.sin((Date.now() / 1300) * Math.PI * 2) * 0.18;
+          currentModel.current.rotation.y = restRotationY.current + wiggle;
+        } else {
+          currentModel.current.rotation.y = restRotationY.current;
+        }
       }
 
       renderer.render(scene, camera);
@@ -92,6 +101,7 @@ const AvatarSelection = () => {
     const onPointerDown = (e) => {
       isDragging.current = true;
       lastPointerX.current = getClientX(e);
+      setShowDragHint(false);
     };
     const onPointerMove = (e) => {
       if (!isDragging.current || !currentModel.current) return;
@@ -99,6 +109,7 @@ const AvatarSelection = () => {
       const deltaX = x - lastPointerX.current;
       lastPointerX.current = x;
       currentModel.current.rotation.y += deltaX * 0.012;
+      restRotationY.current = currentModel.current.rotation.y;
     };
     const onPointerUp = () => {
       isDragging.current = false;
@@ -129,6 +140,7 @@ const AvatarSelection = () => {
     if (!scene) return;
 
     setModelLoading(true);
+    setShowDragHint(true);
 
     if (currentModel.current) {
       scene.remove(currentModel.current);
@@ -154,6 +166,7 @@ const AvatarSelection = () => {
         pivot.add(model);
         pivot.userData.baseY = 0;
         pivot.rotation.y = 0;
+        restRotationY.current = 0;
 
         scene.add(pivot);
         currentModel.current = pivot;
@@ -177,8 +190,11 @@ const AvatarSelection = () => {
   };
 
   return (
-    <div className="setup-container" style={{ background: selected.bg }}>
-      <button className="setup-back" onClick={() => navigate("/registering")}>
+    <div className="setup-container setup-container--habitat">
+      <AvatarHabitatBackdrop avatarId={selected.id} />
+
+      <button className="setup-back setup-back--on-habitat" onClick={() => navigate("/registering")}>
+
         <ChevronLeft size={18} /> back
       </button>
 
@@ -192,23 +208,27 @@ const AvatarSelection = () => {
       </div>
 
       <img
-        src="/koda-logo.png"
+        src="/assets/koda-logo.png"
         alt="Koda"
-        className="setup-logo"
+        className="setup-logo setup-logo--corner"
+
         onError={(e) => {
           e.target.style.visibility = "hidden";
         }}
       />
 
-      <div className="setup-card">
+      <div className="setup-card setup-card--on-habitat">
         <div className="setup-progress">
           <div className="setup-dot" />
           <div className="setup-dot active" />
           <div className="setup-dot" />
         </div>
+        <h1 className="setup-title avatar-select-heading">Who will represent your little one? 🍃</h1>
+        <p key={selected.id} className="avatar-habitat-label">
+          <MapPin size={13} strokeWidth={2.5} />
+          <span>{selected.habitat}</span>
+        </p>
 
-        <h1 className="setup-title">Pick your child's character</h1>
-        <p className="setup-sub">Who represents your little one? 🍃</p>
 
         {/* 3D character stage */}
         <div className="avatar-stage-row">
@@ -225,6 +245,12 @@ const AvatarSelection = () => {
           <div className="avatar-stage-wrap">
             {modelLoading && <div className="avatar-stage-loading">loading…</div>}
             <div className="avatar-sculpture-stage" ref={mountRef} />
+            {showDragHint && (
+              <div className="avatar-drag-hint-icon" aria-label="drag to spin">
+                <div className="avatar-drag-tap-circle" />
+                <Pointer size={28} strokeWidth={2} className="avatar-drag-cursor" />
+              </div>
+            )}
           </div>
 
           <button
@@ -235,9 +261,6 @@ const AvatarSelection = () => {
             ›
           </button>
         </div>
-
-        <p className="avatar-drag-hint">✦ drag to spin ✦</p>
-
         <div className="avatar-dot-row">
           {AVATARS.map((_, i) => (
             <div
