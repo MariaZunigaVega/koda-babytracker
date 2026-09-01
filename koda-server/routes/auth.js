@@ -8,6 +8,10 @@ const crypto = require('crypto');
 
 const router = express.Router();
 
+// Base URL of the deployed front end; falls back to local dev.
+const getClientUrl = () =>
+  (process.env.CLIENT_URL || "http://localhost:3000").replace(/\/+$/, "");
+
 const authMiddleware = (req, res, next) => {
   const token = req.header("x-auth-token");
   if (!token) {
@@ -102,16 +106,25 @@ router.post("/login", async (req, res) => {
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
 
+  // Same response whether or not the account exists, so the endpoint can't be used to enumerate users.
+  const genericResponse = { msg: "If an account exists for that email, a reset link is on its way." };
+
   try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+    if (!email) {
+      return res.status(400).json({ msg: "Email is required." });
     }
 
-    const token = crypto.randomBytes(20).toString('hex');
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) {
+      return res.json(genericResponse);
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
     user.resetPasswordToken = token;
     user.resetPasswordExpires = Date.now() + 3600000;
     await user.save();
+
+    const resetUrl = `${getClientUrl()}/reset-password/${token}`;
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -121,17 +134,18 @@ router.post('/forgot-password', async (req, res) => {
       }
     });
 
-    const mailOptions = {
+    await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: user.email,
       subject: 'Koda Password Reset',
-      text: `Reset your password here: http://localhost:3000/reset-password/${token}`
-    };
+      text: `Reset your password here: ${resetUrl}\n\nThis link expires in 1 hour. If you didn't request it, you can ignore this email.`,
+      html: `<p>Reset your password here: <a href="${resetUrl}">${resetUrl}</a></p><p>This link expires in 1 hour. If you didn't request it, you can ignore this email.</p>`
+    });
 
-    await transporter.sendMail(mailOptions);
-    res.json({ msg: "Email sent!" });
+    res.json(genericResponse);
 
   } catch (err) {
+    console.error("forgot-password error:", err);
     res.status(500).json({ msg: "Server error" });
   }
 });
@@ -148,6 +162,10 @@ router.post('/reset-password/:token', async (req, res) => {
 
     if (!user) {
       return res.status(400).json({ msg: "Invalid or expired token" });
+    }
+
+    if (!password || password.length < 8) {
+      return res.status(400).json({ msg: "Password must be at least 8 characters." });
     }
 
     const salt = await bcrypt.genSalt(10);
