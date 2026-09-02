@@ -6,6 +6,8 @@ const PDFDocument = require('pdfkit');
 const Feeding = require('../models/feeding');
 const Sleep = require('../models/sleep');
 const Diaper = require('../models/diaper');
+const Child = require('../models/Child');
+const { drawSleepChart, drawFeedingChart, drawDiaperSummary, drawReportHeader, drawChildInformation, drawActivitySummary, drawAtAGlance, drawChartsPanel } = require('../reports/pdfReport');
 
 const authMiddleware = (req, res, next) => {
     const token = req.header('x-auth-token');
@@ -104,6 +106,250 @@ const calculateActivityFrequency = ({ feedings, sleeps, diapers, range }) => {
             Number((diaperCount / daysInRange).toFixed(1))
     };
 };
+
+// Calculates how many days have at least one logged activity
+const calculateDaysLogged = ({ feedings, sleeps, diapers, range }) => {
+    const daysInRange = range === 'week' ? 7 : 1;
+
+    const loggedDates = new Set();
+
+    [...feedings, ...sleeps, ...diapers].forEach((item) => {
+        const timestamp = new Date(
+            item.timestamp ||
+            item.startTime ||
+            item.endTime
+        );
+
+        if (!isNaN(timestamp)) {
+            loggedDates.add(
+                timestamp.toISOString().split('T')[0]
+            );
+        }
+    });
+
+    const daysLogged = loggedDates.size;
+
+    return {
+        daysLogged,
+        daysInRange,
+        percentage: Math.round(
+            (daysLogged / daysInRange) * 100
+        )
+    };
+};
+
+const formatDuration = (minutes) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+
+    if (hours > 0 && mins > 0) {
+        return `${hours} hr ${mins} min`;
+    }
+
+    if (hours > 0) {
+        return `${hours} hr`;
+    }
+
+    return `${mins} min`;
+};
+
+// Calculates child's current age
+const calculateAge = (dob) => {
+    if (!dob) return 'Not provided';
+
+    const [year, month, day] = dob.split('-').map(Number);
+    const birthDate = new Date(year, month - 1, day);
+    const today = new Date();
+
+    if (birthDate > today) return 'Invalid date of birth';
+
+    let years = today.getFullYear() - birthDate.getFullYear();
+    let months = today.getMonth() - birthDate.getMonth();
+
+    if (today.getDate() < birthDate.getDate()) {
+        months -= 1;
+    }
+
+    if (months < 0) {
+        years -= 1;
+        months += 12;
+    }
+
+    if (years > 0) {
+        return `${years} year${years !== 1 ? 's' : ''}${months > 0
+            ? ` ${months} month${months !== 1 ? 's' : ''}`
+            : ''
+            }`;
+    }
+
+    if (months > 0) {
+        return `${months} month${months !== 1 ? 's' : ''}`;
+    }
+
+    const days = Math.floor(
+        (today - birthDate) / (1000 * 60 * 60 * 24)
+    );
+
+    return `${days} day${days !== 1 ? 's' : ''}`;
+};
+
+const formatDate = (dateString) => {
+    if (!dateString) return 'Not provided';
+
+    const [year, month, day] = dateString.split('-').map(Number);
+
+    return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    });
+};
+
+const formatReportPeriod = (range) => {
+    const { start, end } = getRangeWindow(range);
+
+    const startDate = start.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric'
+    });
+
+    const endDate = end.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    });
+
+    if (range === 'day') {
+        return end.toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
+
+    return `${startDate} - ${endDate}`;
+};
+// for sleep chart in pdf
+const buildSleepChartData = (sleeps, range) => {
+    if (range === 'day') {
+        return sleeps.map((sleep, index) => ({
+            label: `Sleep ${index + 1}`,
+            minutes: Number(sleep.duration) || 0
+        }));
+    }
+
+    const { start } = getRangeWindow(range);
+    const days = [];
+
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+
+        days.push({
+            dateKey: date.toISOString().split('T')[0],
+            label: date.toLocaleDateString('en-US', {
+                weekday: 'short'
+            }),
+            dateLabel: date.toLocaleDateString('en-US', {
+                month: 'numeric',
+                day: 'numeric'
+            }),
+            minutes: 0
+        });
+    }
+
+    sleeps.forEach((sleep) => {
+        const sleepDate = new Date(
+            sleep.timestamp || sleep.startTime
+        );
+
+        const dateKey = sleepDate.toISOString().split('T')[0];
+
+        const day = days.find(
+            (item) => item.dateKey === dateKey
+        );
+
+        if (day) {
+            day.minutes += Number(sleep.duration) || 0;
+        }
+    });
+
+    return days;
+};
+
+// for feeding chart in pdf
+const buildFeedingChartData = (feedings, range) => {
+    if (range === 'day') {
+        return feedings.map((feeding, index) => ({
+            label: `Feed ${index + 1}`,
+            count: 1,
+            ounces: Number(feeding.amount) || 0
+        }));
+    }
+
+    const { start } = getRangeWindow(range);
+    const days = [];
+
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+
+        days.push({
+            dateKey: date.toISOString().split('T')[0],
+            label: date.toLocaleDateString('en-US', {
+                weekday: 'short'
+            }),
+            dateLabel: date.toLocaleDateString('en-US', {
+                month: 'numeric',
+                day: 'numeric'
+            }),
+            count: 0,
+            ounces: 0
+        });
+    }
+
+    feedings.forEach((feeding) => {
+        const feedingDate = new Date(feeding.timestamp);
+        const dateKey = feedingDate.toISOString().split('T')[0];
+
+        const day = days.find(
+            (item) => item.dateKey === dateKey
+        );
+
+        if (day) {
+            day.count += 1;
+            day.ounces += Number(feeding.amount) || 0;
+        }
+    });
+
+    return days;
+};
+
+// for diaper in pdf
+const buildDiaperSummary = (diapers) => {
+    const counts = {
+        Wet: 0,
+        Dirty: 0,
+        Mixed: 0
+    };
+
+    diapers.forEach((diaper) => {
+        if (counts[diaper.type] !== undefined) {
+            counts[diaper.type] += 1;
+        }
+    });
+
+    const total =
+        counts.Wet +
+        counts.Dirty +
+        counts.Mixed;
+
+    return {
+        counts,
+        total
+    };
+};
+
 const buildAiAnalysis = ({ feedings, sleeps, diapers, range, childName }) => {
     const lines = [];
     lines.push(`AI-guided summary for ${childName}`);
@@ -178,15 +424,38 @@ const buildAiAnalysis = ({ feedings, sleeps, diapers, range, childName }) => {
     return lines.join('\n');
 };
 
-const buildReportText = ({ feedings, sleeps, diapers, range, childName }) => {
+const buildReportText = ({ feedings, sleeps, diapers, range, childName, childProfile }) => {
     const lines = [];
-    lines.push(`Koda Activity Report`);
-    lines.push(`Child: ${childName}`);
-    lines.push(`Range: ${range}`);
-    lines.push('');
-    lines.push(`Feeding entries: ${feedings.length}`);
-    lines.push(`Sleep entries: ${sleeps.length}`);
-    lines.push(`Diaper entries: ${diapers.length}`);
+    lines.push('CHILD INFORMATION');
+    lines.push(`Name: ${childName}`);
+
+    if (childProfile) {
+        lines.push(`Date of Birth: ${formatDate(childProfile.dob)}`);
+        lines.push(`Age: ${calculateAge(childProfile.dob)}`);
+        lines.push(`Weight: ${childProfile.weight || 'Not provided'}`);
+        lines.push(`Allergies: ${childProfile.allergies || 'Not provided'}`);
+
+        if (childProfile.other) {
+            lines.push(`Other Notes: ${childProfile.other}`);
+        }
+    }
+
+    lines.push(`Report Type: ${range === 'week' ? 'Weekly' : 'Daily'}`);
+    lines.push(`Report Period: ${formatReportPeriod(range)}`);
+    const sleepStats = calculateSleepDuration(sleeps);
+
+    const frequencyStats = calculateActivityFrequency({
+        feedings,
+        sleeps,
+        diapers,
+        range
+    });
+
+    lines.push('AT A GLANCE');
+    lines.push(`Total Sleep: ${sleepStats.totalMinutes} min`);
+    lines.push(`Average Sleep Session: ${sleepStats.averageMinutes} min`);
+    lines.push(`Feedings: ${frequencyStats.feedingCount}`);
+    lines.push(`Diaper Changes: ${frequencyStats.diaperCount}`);
     lines.push('');
     lines.push('AI-guided summary:');
     lines.push(buildAiAnalysis({ feedings, sleeps, diapers, range, childName }));
@@ -272,11 +541,39 @@ router.get('/activities', async (req, res) => {
     }
 });
 
+// reports
 router.post('/reports/generate', authMiddleware, async (req, res) => {
     try {
         const childName = req.body.childName || 'Baby';
         const range = req.body.range || 'day';
         const filter = childName ? { childName } : {};
+
+        const childProfile = await Child.findOne({
+            name: childName,
+            userId: req.user.id
+        });
+
+        const childInfo = {
+            name: childName,
+            dob: childProfile
+                ? formatDate(childProfile.dob)
+                : 'Not provided',
+            age: childProfile
+                ? calculateAge(childProfile.dob)
+                : 'Not provided',
+            weight: childProfile?.weight || 'Not provided',
+            allergies: childProfile?.allergies || 'Not provided'
+        };
+
+        const reportInfo = {
+            period: formatReportPeriod(range),
+            type: range === 'week' ? 'Weekly' : 'Daily',
+            generated: new Date().toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            })
+        };
 
         const feedings = await Feeding.find(filter).sort({ timestamp: -1 });
         const sleeps = await Sleep.find(filter).sort({ timestamp: -1 });
@@ -286,17 +583,109 @@ router.post('/reports/generate', authMiddleware, async (req, res) => {
         const scopedSleeps = filterByRange(sleeps, range);
         const scopedDiapers = filterByRange(diapers, range);
 
+        const sleepStats = calculateSleepDuration(
+            scopedSleeps
+        );
+
+        const frequencyStats = calculateActivityFrequency({
+            feedings: scopedFeedings,
+            sleeps: scopedSleeps,
+            diapers: scopedDiapers,
+            range
+        });
+
+        const daysInRange =
+            range === 'week' ? 7 : 1;
+
+        const totalFeedingOunces = scopedFeedings.reduce(
+            (total, feeding) =>
+                total + (Number(feeding.amount) || 0),
+            0
+        );
+
+        const averageFeedingOuncesPerDay =
+            Number(
+                (totalFeedingOunces / daysInRange).toFixed(1)
+            );
+
+        const chartStats = {
+            sleepPerDay: formatDuration(
+                Math.round(
+                    sleepStats.totalMinutes /
+                    daysInRange
+                )
+            ),
+
+            feedingPerDay: `${averageFeedingOuncesPerDay} oz`,
+
+            diaperPerDay: frequencyStats.diaperPerDay
+        };
+
+        const daysLoggedStats = calculateDaysLogged({
+            feedings: scopedFeedings,
+            sleeps: scopedSleeps,
+            diapers: scopedDiapers,
+            range
+        });
+
+        const summaryText =
+            `During this ${range === 'week' ? 'reporting period' : 'day'}, ` +
+            `${frequencyStats.feedingCount} feeding${frequencyStats.feedingCount !== 1 ? 's' : ''}, ` +
+            `${frequencyStats.sleepCount} sleep session${frequencyStats.sleepCount !== 1 ? 's' : ''}, ` +
+            `and ${frequencyStats.diaperCount} diaper change${frequencyStats.diaperCount !== 1 ? 's' : ''} were recorded. ` +
+            `Total recorded sleep was ${formatDuration(sleepStats.totalMinutes)}, ` +
+            `with an average session of ${formatDuration(sleepStats.averageMinutes)}.`;
+
+        const atAGlanceStats = {
+            totalSleep: formatDuration(
+                sleepStats.totalMinutes),
+            averageSleep: formatDuration(
+                sleepStats.averageMinutes),
+            feedings: frequencyStats.feedingCount,
+            feedingPerDay: frequencyStats.feedingPerDay,
+            diapers: frequencyStats.diaperCount,
+            diaperPerDay: frequencyStats.diaperPerDay,
+            daysLogged:
+                `${daysLoggedStats.daysLogged} / ${daysLoggedStats.daysInRange}`,
+            daysLoggedPercent:
+                `${daysLoggedStats.percentage}%`
+        };
+
+        const sleepChartData = buildSleepChartData(
+            scopedSleeps,
+            range
+        );
+
+        const feedingChartData = buildFeedingChartData(
+            scopedFeedings,
+            range
+        );
+
+        const diaperSummary = buildDiaperSummary(
+            scopedDiapers
+        );
+
         const doc = new PDFDocument({ margin: 36 });
-        const reportText = buildReportText({ feedings: scopedFeedings, sleeps: scopedSleeps, diapers: scopedDiapers, range, childName });
+        const reportText = buildReportText({ feedings: scopedFeedings, sleeps: scopedSleeps, diapers: scopedDiapers, range, childName, childProfile });
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${childName}-${range}-report.pdf"`);
 
         doc.pipe(res);
-        doc.fontSize(20).text('Koda Activity Report', { underline: true });
-        doc.moveDown();
-        doc.fontSize(12).text(reportText);
+
+        // Page 1
+        drawReportHeader(doc, range);
+        drawChildInformation(doc, childInfo, reportInfo);
+        drawActivitySummary(doc, summaryText);
+        drawAtAGlance(doc, atAGlanceStats);
+        const chartY = doc.y + 20;
+        const chartWidth = 160;
+        const chartHeight = 145;
+
+        drawChartsPanel(doc, sleepChartData, feedingChartData, diaperSummary, range, chartStats, chartY);
+
         doc.end();
+
     } catch (err) {
         console.error('Report generation error:', err);
         res.status(500).json({ error: err.message });
