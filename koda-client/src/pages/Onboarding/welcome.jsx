@@ -27,13 +27,13 @@ const Welcome = () => {
 
         <button
           className="setup-btn-green"
-          onClick={() => navigate("/registering")}
+          onClick={() => navigate("/registering?role=parent")}
         >
           Parent
         </button>
         <button
           className="setup-btn-brown"
-          onClick={() => navigate("/registering")}
+          onClick={() => navigate("/registering?role=caregiver")}
         >
           Caregiver
         </button>

@@ -1,16 +1,20 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import "../../styling/pages/setUp.css";
 import { API_URL } from "../../config";
 
 const Registering = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const role = searchParams.get("role") === "caregiver" ? "caregiver" : "parent";
+  const isCaregiver = role === "caregiver";
   const [form, setForm] = useState({
     username: "",
     email: "",
     password: "",
     confirm: "",
+    code: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,8 +45,12 @@ const Registering = () => {
   const handleSubmit = async () => {
     const isPasswordValid = Object.values(passwordChecks).every(Boolean);
 
-    if (!form.username || !form.email || !form.password || !form.confirm) {
+    if (!form.username || !form.email || !form.password || !form.confirm || (isCaregiver && !form.code)) {
       setError("please fill in all fields.");
+      return;
+    }
+    if (isCaregiver && !/^\d{6}$/.test(form.code)) {
+      setError("please enter a valid 6 digit caregiver code.");
       return;
     }
     if (!isPasswordValid) {
@@ -64,6 +72,7 @@ const Registering = () => {
           username: form.username,
           email: form.email,
           password: form.password,
+          ...(isCaregiver && { role, code: form.code }),
         }),
       });
 
@@ -99,7 +108,9 @@ const Registering = () => {
       <img src="/koda-logo.png" alt="Koda" className="setup-logo" onError={(e) => { e.target.style.visibility = "hidden"; }} />
 
       <div className="setup-card">
-        <h1 className="setup-title">Create your account</h1>
+        <h1 className="setup-title">
+          {isCaregiver ? "Create your caregiver account" : "Create your parent account"}
+        </h1>
         
         {/* Username & Email Fields */}
         <div className="setup-field">
@@ -110,6 +121,24 @@ const Registering = () => {
           <label>Email</label>
           <input type="email" placeholder="email@email.com" value={form.email} onChange={set("email")} />
         </div>
+
+        {isCaregiver && (
+          <div className="setup-field">
+            <label>Enter Code</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              placeholder="enter 6 digit code"
+              value={form.code}
+              onChange={(e) => set("code")({
+                target: { value: e.target.value.replace(/\D/g, "") },
+              })}
+              required
+            />
+          </div>
+        )}
 
         {/* PASSWORD FIELD #1 */}
         <div className="setup-field">
