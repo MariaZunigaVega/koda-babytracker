@@ -28,7 +28,8 @@ const authMiddleware = (req, res, next) => {
 };
 router.post("/register", async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, role } = req.body;
+    const accountRole = role === "caregiver" ? "caregiver" : "parent";
 
     if (!username || !email || !password) {
       return res.status(400).json({ msg: "Username, email, and password are all required." });
@@ -52,6 +53,7 @@ router.post("/register", async (req, res) => {
       username,
       email,
       password: hashedPassword,
+      role: accountRole,
     });
 
     await user.save();
@@ -202,6 +204,9 @@ router.put('/me', authMiddleware, async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ msg: 'User not found' });
+    }
+    if (user.role === 'caregiver') {
+      return res.status(403).json({ msg: 'Caregivers cannot edit account settings.' });
     }
 
     if (email && email !== user.email) {

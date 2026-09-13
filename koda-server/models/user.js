@@ -16,6 +16,11 @@ const UserSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    role: {
+      type: String,
+      enum: ["parent", "caregiver"],
+      default: "parent",
+    },
     resetPasswordToken: { 
       type: String 
     },

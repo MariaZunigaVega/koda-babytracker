@@ -85,7 +85,7 @@ const Registering = () => {
       }
 
       localStorage.setItem("token", data.token);
-      navigate("/avatarSelection");
+      navigate(isCaregiver ? "/ParentDashboard" : "/avatarSelection");
     } catch (err) {
       setError("could not connect to server. try again.");
       setLoading(false);

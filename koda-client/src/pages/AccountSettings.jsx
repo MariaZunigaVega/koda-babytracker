@@ -35,11 +35,28 @@ const AccountSettings = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [accessChecked, setAccessChecked] = useState(false);
 
   useEffect(() => {
     const savedChild = getSelectedChildForUser();
     if (savedChild) setSelectedChild(savedChild);
-  }, []);
+
+    const token = localStorage.getItem('token');
+    fetch(`${API_URL}/api/auth/me`, {
+      headers: { 'x-auth-token': token },
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((user) => {
+        if (user?.role === 'caregiver') {
+          navigate('/ParentDashboard', { replace: true });
+          return;
+        }
+        setAccessChecked(true);
+      })
+      .catch(() => setAccessChecked(true));
+  }, [navigate]);
+
+  if (!accessChecked) return null;
 
   const childName = selectedChild?.name || 'Gracie';
 
