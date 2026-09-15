@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-import { ChevronDown, X, Save, Milk, Moon, Baby, Puzzle, Smile, ChevronRight, Clock, Calendar } from 'lucide-react';
+import { ChevronDown, X, Save, Milk, Moon, Baby, Puzzle, Smile, ChevronRight, Clock, Calendar, AlertTriangle } from 'lucide-react';
 import '../styling/global/App.css';
 import '../styling/pages/activities.css';
 
@@ -47,6 +47,8 @@ const Activities = () => {
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
   const [repeatDays, setRepeatDays] = useState([]);
+
+  const [sleepError, setSleepError] = useState('');
 
   const toggleRepeatDay = (day) => {
     setRepeatDays((prev) =>
@@ -101,6 +103,13 @@ const Activities = () => {
         const today = new Date().toISOString().split('T')[0];
         const sleepStart = new Date(`${today}T${startTime}`);
         const sleepEnd = new Date(`${today}T${endTime}`);
+        if (startTime === endTime) {
+          setSleepError('Start time and end time cannot be the same.');
+          return;
+        }
+
+        setSleepError('');
+
         const duration = Math.round((sleepEnd - sleepStart) / (1000 * 60));
 
         await axios.post(`${API_URL}/api/sleep`, {
@@ -217,7 +226,10 @@ const Activities = () => {
                         <input
                           type="time"
                           value={startTime}
-                          onChange={(e) => setStartTime(e.target.value)}
+                          onChange={(e) => {
+                            setStartTime(e.target.value);
+                            setSleepError('');
+                          }}
                           className="log-input"
                           required
                         />
@@ -230,13 +242,21 @@ const Activities = () => {
                         <input
                           type="time"
                           value={endTime}
-                          onChange={(e) => setEndTime(e.target.value)}
+                          onChange={(e) => {
+                            setEndTime(e.target.value);
+                            setSleepError('');
+                          }}
                           className="log-input"
                           required
                         />
                       </div>
                     </div>
-
+                    {sleepError && (
+                      <div className="sleep-warning" role="alert">
+                        <AlertTriangle size={18} />
+                        <span>{sleepError}</span>
+                      </div>
+                    )}
                     <div className="log-field-group">
                       <label className="log-label">quality</label>
                       <div className="log-option-row">
