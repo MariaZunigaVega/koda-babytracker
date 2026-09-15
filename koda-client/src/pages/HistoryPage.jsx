@@ -52,6 +52,7 @@ const HistoryPage = () => {
             label: 'sleep',
             detail: `${item.quality || 'N/A'} • ${item.duration || 0} min`,
             timestamp: item.timestamp || item.endTime || item.startTime,
+            startTime: item.startTime,
           })),
           ...diapers.map((item) => ({
             id: `diaper-${item._id || Math.random()}`,
@@ -126,10 +127,26 @@ const HistoryPage = () => {
     const sleepItems = filteredHistoryItems.filter((item) => item.type === 'sleep');
 
     if (range === 'day') {
-      return sleepItems.map((item, index) => {
+      const sortedSleeps = [...sleepItems].sort(
+        (a, b) =>
+          new Date(a.startTime) - new Date(b.startTime)
+      );
+
+      return sortedSleeps.map((item) => {
         const match = item.detail.match(/(\d+)\s*min/);
         const duration = match ? Number(match[1]) : 0;
-        return { label: `Sleep ${index + 1}`, minutes: duration };
+
+        const sleepTime = new Date(
+          item.startTime
+        ).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit'
+        });
+
+        return {
+          label: sleepTime,
+          minutes: duration
+        };
       });
     }
 

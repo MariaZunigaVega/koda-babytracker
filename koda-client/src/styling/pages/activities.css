@@ -313,3 +313,24 @@
   color: #24472d;
   box-shadow: 0 3px 0 #496b4f;
 }
+
+/*if sleeps log has same start and end time display warning*/
+.sleep-warning {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin: -3px 0 14px;
+  border: 2px solid #d58b8b;
+  border-radius: 12px;
+  background: rgba(255, 238, 238, 0.95);
+  color: #8a3f3f;
+  font-family: "Nunito", sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.sleep-warning svg {
+  flex-shrink: 0;
+}
