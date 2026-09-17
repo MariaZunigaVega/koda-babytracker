@@ -74,8 +74,14 @@ const AnalyticsPage = () => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const childName = getSelectedChildForUser()?.name || 'Gracie';
-        const response = await axios.get(`${API_URL}/api/activities?childName=${encodeURIComponent(childName)}`);
+        const childId = selectedChild?._id;
+        const token = localStorage.getItem('token');
+        if (!childId || !token) return;
+
+        const response = await axios.get(`${API_URL}/api/activities`, {
+          params: { childId },
+          headers: { 'x-auth-token': token },
+        });
         const { feedings = [], sleeps = [], diapers = [] } = response.data;
 
         const merged = [
@@ -111,7 +117,7 @@ const AnalyticsPage = () => {
     };
 
     fetchHistory();
-  }, []);
+  }, [selectedChild?._id]);
   const getWindow = (periodsAgo) => {
     const now = new Date();
     const end = new Date(now);
@@ -135,8 +141,8 @@ const AnalyticsPage = () => {
     return itemDate >= start && itemDate <= end;
   });
 
-  const currentWindow = useMemo(() => getWindow(0), [range]);
-  const previousWindow = useMemo(() => getWindow(1), [range]);
+  const currentWindow = getWindow(0);
+  const previousWindow = getWindow(1);
 
   const filteredHistoryItems = useMemo(
     () => filterByWindow(historyItems, currentWindow),
@@ -267,12 +273,17 @@ const AnalyticsPage = () => {
   const handleExportReport = async () => {
     try {
       setExporting(true);
-      const childName = getSelectedChildForUser()?.name || 'Gracie';
+      const childId = selectedChild?._id;
+      const childName = selectedChild?.name || 'child';
       const token = localStorage.getItem('token');
+
+      if (!childId || !token) {
+        throw new Error('A selected child and authenticated user are required.');
+      }
 
       const response = await axios.post(
         `${API_URL}/api/reports/generate`,
-        { childName, range, type: 'analytics' },
+        { childId, range, type: 'analytics' },
         { headers: { 'x-auth-token': token }, responseType: 'blob' }
       );
 

@@ -25,6 +25,7 @@ const unitSuffix = { minutes: 'min', seconds: 'sec', hours: 'hr' };
 const DIAPER_LEGEND_CLASS = { Wet: 'legend-dot--wet', Dirty: 'legend-dot--dirty', Mixed: 'legend-dot--mixed' };
 
 const HistoryPage = () => {
+  const selectedChild = getSelectedChildForUser();
   const [historyItems, setHistoryItems] = useState([]);
   const [range, setRange] = useState('day');
   const [loading, setLoading] = useState(true);
@@ -34,8 +35,14 @@ const HistoryPage = () => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const childName = getSelectedChildForUser()?.name || 'Gracie';
-        const response = await axios.get(`${API_URL}/api/activities?childName=${encodeURIComponent(childName)}`);
+        const childId = selectedChild?._id;
+        const token = localStorage.getItem('token');
+        if (!childId || !token) return;
+
+        const response = await axios.get(`${API_URL}/api/activities`, {
+          params: { childId },
+          headers: { 'x-auth-token': token },
+        });
         const { feedings = [], sleeps = [], diapers = [] } = response.data;
 
         const merged = [
@@ -72,7 +79,7 @@ const HistoryPage = () => {
     };
 
     fetchHistory();
-  }, []);
+  }, [selectedChild?._id]);
 
   const filteredHistoryItems = useMemo(() => {
     const now = new Date();
@@ -216,20 +223,20 @@ const HistoryPage = () => {
 
   const diaperTotal = diaperChartData.reduce((total, item) => total + item.value, 0);
 
-  const diaperColors = [
-    '#789F75',
-    '#8A7BC2',
-    '#D7A35B'
-  ];
   const handleExport = async () => {
     try {
       setExporting(true);
-      const childName = getSelectedChildForUser()?.name || 'Gracie';
+      const childId = selectedChild?._id;
+      const childName = selectedChild?.name || 'child';
       const token = localStorage.getItem('token');
+
+      if (!childId || !token) {
+        throw new Error('A selected child and authenticated user are required.');
+      }
 
       const response = await axios.post(
         `${API_URL}/api/reports/generate`,
-        { childName, range, type: 'log' },
+        { childId, range, type: 'log' },
         {
           headers: { 'x-auth-token': token },
           responseType: 'blob',

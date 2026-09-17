@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-import { ChevronDown, X, Save, Milk, Moon, Baby, Puzzle, Smile, ChevronRight, Clock, Calendar, AlertTriangle } from 'lucide-react';
+import { Save, Milk, Moon, Baby, Clock, Calendar, AlertTriangle } from 'lucide-react';
 import '../styling/global/App.css';
 import '../styling/pages/activities.css';
 
@@ -87,18 +87,26 @@ const Activities = () => {
     e.preventDefault();
 
     try {
-      const childName = getSelectedChildForUser()?.name || "Gracie";
+      const selectedChild = getSelectedChildForUser();
+      const childId = selectedChild?._id;
+      const token = localStorage.getItem('token');
+
+      if (!childId || !token) {
+        throw new Error('A selected child and authenticated user are required.');
+      }
+
+      const requestConfig = { headers: { 'x-auth-token': token } };
 
       if (mode === 'schedule') {
         await axios.post(`${API_URL}/api/schedule`, {
-          childName,
+          childId,
           activityType: type,
           repeat,
           time: scheduleTime,
           ...(repeat === 'once' ? { date: scheduleDate } : {}),
           ...(repeat === 'weekly' ? { daysOfWeek: repeatDays } : {}),
           details: buildActivityDetails(),
-        });
+        }, requestConfig);
       } else if (type === 'sleep') {
         const today = new Date().toISOString().split('T')[0];
         const sleepStart = new Date(`${today}T${startTime}`);
@@ -113,27 +121,24 @@ const Activities = () => {
         const duration = Math.round((sleepEnd - sleepStart) / (1000 * 60));
 
         await axios.post(`${API_URL}/api/sleep`, {
-          childName,
+          childId,
           startTime: sleepStart,
           endTime: sleepEnd,
           duration,
           quality,
-          timestamp: new Date(),
-        });
+        }, requestConfig);
       } else if (type === 'feeding') {
         await axios.post(`${API_URL}/api/feeding`, {
-          childName,
+          childId,
           type: feedingType,
           amount: feedingAmount ? Number(feedingAmount) : undefined,
           side: feedingSide || 'N/A',
-          timestamp: new Date(),
-        });
+        }, requestConfig);
       } else if (type === 'diaper') {
         await axios.post(`${API_URL}/api/diaper`, {
-          childName,
+          childId,
           type: diaperType,
-          timestamp: new Date(),
-        });
+        }, requestConfig);
       }
 
       navigate('/ParentDashboard');

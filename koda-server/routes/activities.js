@@ -23,6 +23,14 @@ const authMiddleware = (req, res, next) => {
     }
 };
 
+const findAuthorizedChild = (childId, userId) => Child.findOne({
+    _id: childId,
+    $or: [
+        { userId },
+        { caregivers: userId }
+    ]
+});
+
 const getRangeWindow = (range) => {
     const now = new Date();
     const start = new Date(now);
@@ -493,21 +501,49 @@ const buildReportText = ({ feedings, sleeps, diapers, range, childName, childPro
 };
 
 //Feeding routes
-router.post('/feeding', async (req, res) => {
+router.post("/feeding", authMiddleware, async (req, res) => {
     try {
-        const feeding = new Feeding(req.body);
-        await feeding.save();
-        res.status(201).json(feeding);
-    } catch (err) {
+        const { childId, type, amount, side } = req.body;
+
+        const child = await findAuthorizedChild(childId, req.user.id);
+        if (!child) {
+            return res.status(404).json({ error: "Child profile not found or access denied" });
+        }
+
+        const newFeeding = await Feeding.create({
+            childId,
+            loggedBy: req.user.id,
+            type,
+            amount,
+            side
+        });
+
+        res.status(201).json(newFeeding);
+      } catch (err) {
         res.status(400).json({ error: err.message });
-    }
+  }
 });
 
 //Sleep routes
-router.post('/sleep', async (req, res) => {
+router.post('/sleep', authMiddleware, async (req, res) => {
     try {
-        const sleep = new Sleep(req.body);
-        await sleep.save();
+        const { childId, startTime, endTime, duration, type, quality } = req.body;
+
+        const child = await findAuthorizedChild(childId, req.user.id);
+        if (!child) {
+            return res.status(404).json({ error: "Child profile not found or access denied" });
+        }
+
+        const sleep = await Sleep.create({
+            childId,
+            loggedBy: req.user.id,
+            startTime,
+            endTime,
+            duration,
+            type,
+            quality
+        });
+
         res.status(201).json(sleep);
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -515,10 +551,21 @@ router.post('/sleep', async (req, res) => {
 });
 
 //Diaper routes
-router.post('/diaper', async (req, res) => {
+router.post('/diaper', authMiddleware, async (req, res) => {
     try {
-        const diaper = new Diaper(req.body);
-        await diaper.save();
+        const { childId, type } = req.body;
+
+        const child = await findAuthorizedChild(childId, req.user.id);
+        if (!child) {
+            return res.status(404).json({ error: "Child profile not found or access denied" });
+        }
+
+        const diaper = await Diaper.create({
+            childId,
+            loggedBy: req.user.id,
+            type
+        });
+
         res.status(201).json(diaper);
     } catch (err) {
         res.status(400).json({ error: err.message });
@@ -526,14 +573,30 @@ router.post('/diaper', async (req, res) => {
 });
 
 //GET all activities
-router.get('/activities', async (req, res) => {
+router.get('/activities', authMiddleware, async (req, res) => {
     try {
-        const childName = req.query.childName;
-        const filter = childName ? { childName } : {};
+        const { childId } = req.query;
 
-        const feedings = await Feeding.find(filter).sort({ timestamp: -1 });
-        const sleeps = await Sleep.find(filter).sort({ timestamp: -1 });
-        const diapers = await Diaper.find(filter).sort({ timestamp: -1 });
+        if (!childId) {
+            return res.status(400).json({ error: "childId query parameter is required" });
+        }
+
+        const child = await findAuthorizedChild(childId, req.user.id);
+        if (!child) {
+            return res.status(404).json({ error: "Child profile not found or access denied" });
+        }
+
+        const filter = { childId };
+
+        const feedings = await Feeding.find(filter)
+            .populate('loggedBy', 'username role')
+            .sort({ timestamp: -1 });
+        const sleeps = await Sleep.find(filter)
+            .populate('loggedBy', 'username role')
+            .sort({ timestamp: -1 });
+        const diapers = await Diaper.find(filter)
+            .populate('loggedBy', 'username role')
+            .sort({ timestamp: -1 });
 
         res.json({ feedings, sleeps, diapers });
     } catch (err) {
@@ -544,25 +607,29 @@ router.get('/activities', async (req, res) => {
 // reports
 router.post('/reports/generate', authMiddleware, async (req, res) => {
     try {
-        const childName = req.body.childName || 'Baby';
+        const { childId } = req.body;
         const range = req.body.range || 'day';
-        const filter = childName ? { childName } : {};
 
-        const childProfile = await Child.findOne({
-            name: childName,
-            userId: req.user.id
-        });
+        if (!childId) {
+            return res.status(400).json({ error: "childId is required to generate a report" });
+        }
+
+        // Verify authorized access: primary parent (userId) OR authorized caregiver
+        const childProfile = await findAuthorizedChild(childId, req.user.id);
+
+        if (!childProfile) {
+            return res.status(404).json({ error: "Child profile not found or access denied" });
+        }
+
+        const childName = childProfile.name;
+        const filter = { childId };
 
         const childInfo = {
             name: childName,
-            dob: childProfile
-                ? formatDate(childProfile.dob)
-                : 'Not provided',
-            age: childProfile
-                ? calculateAge(childProfile.dob)
-                : 'Not provided',
-            weight: childProfile?.weight || 'Not provided',
-            allergies: childProfile?.allergies || 'Not provided'
+            dob: childProfile.dob ? formatDate(childProfile.dob) : 'Not provided',
+            age: childProfile.dob ? calculateAge(childProfile.dob) : 'Not provided',
+            weight: childProfile.weight || 'Not provided',
+            allergies: childProfile.allergies || 'Not provided'
         };
 
         const reportInfo = {
@@ -583,9 +650,7 @@ router.post('/reports/generate', authMiddleware, async (req, res) => {
         const scopedSleeps = filterByRange(sleeps, range);
         const scopedDiapers = filterByRange(diapers, range);
 
-        const sleepStats = calculateSleepDuration(
-            scopedSleeps
-        );
+        const sleepStats = calculateSleepDuration(scopedSleeps);
 
         const frequencyStats = calculateActivityFrequency({
             feedings: scopedFeedings,
@@ -594,30 +659,22 @@ router.post('/reports/generate', authMiddleware, async (req, res) => {
             range
         });
 
-        const daysInRange =
-            range === 'week' ? 7 : 1;
+        const daysInRange = range === 'week' ? 7 : 1;
 
         const totalFeedingOunces = scopedFeedings.reduce(
-            (total, feeding) =>
-                total + (Number(feeding.amount) || 0),
+            (total, feeding) => total + (Number(feeding.amount) || 0),
             0
         );
 
-        const averageFeedingOuncesPerDay =
-            Number(
-                (totalFeedingOunces / daysInRange).toFixed(1)
-            );
+        const averageFeedingOuncesPerDay = Number(
+            (totalFeedingOunces / daysInRange).toFixed(1)
+        );
 
         const chartStats = {
             sleepPerDay: formatDuration(
-                Math.round(
-                    sleepStats.totalMinutes /
-                    daysInRange
-                )
+                Math.round(sleepStats.totalMinutes / daysInRange)
             ),
-
             feedingPerDay: `${averageFeedingOuncesPerDay} oz`,
-
             diaperPerDay: frequencyStats.diaperPerDay
         };
 
@@ -637,36 +694,29 @@ router.post('/reports/generate', authMiddleware, async (req, res) => {
             `with an average session of ${formatDuration(sleepStats.averageMinutes)}.`;
 
         const atAGlanceStats = {
-            totalSleep: formatDuration(
-                sleepStats.totalMinutes),
-            averageSleep: formatDuration(
-                sleepStats.averageMinutes),
+            totalSleep: formatDuration(sleepStats.totalMinutes),
+            averageSleep: formatDuration(sleepStats.averageMinutes),
             feedings: frequencyStats.feedingCount,
             feedingPerDay: frequencyStats.feedingPerDay,
             diapers: frequencyStats.diaperCount,
             diaperPerDay: frequencyStats.diaperPerDay,
-            daysLogged:
-                `${daysLoggedStats.daysLogged} / ${daysLoggedStats.daysInRange}`,
-            daysLoggedPercent:
-                `${daysLoggedStats.percentage}%`
+            daysLogged: `${daysLoggedStats.daysLogged} / ${daysLoggedStats.daysInRange}`,
+            daysLoggedPercent: `${daysLoggedStats.percentage}%`
         };
 
-        const sleepChartData = buildSleepChartData(
-            scopedSleeps,
-            range
-        );
-
-        const feedingChartData = buildFeedingChartData(
-            scopedFeedings,
-            range
-        );
-
-        const diaperSummary = buildDiaperSummary(
-            scopedDiapers
-        );
+        const sleepChartData = buildSleepChartData(scopedSleeps, range);
+        const feedingChartData = buildFeedingChartData(scopedFeedings, range);
+        const diaperSummary = buildDiaperSummary(scopedDiapers);
 
         const doc = new PDFDocument({ margin: 36 });
-        const reportText = buildReportText({ feedings: scopedFeedings, sleeps: scopedSleeps, diapers: scopedDiapers, range, childName, childProfile });
+        const reportText = buildReportText({
+            feedings: scopedFeedings,
+            sleeps: scopedSleeps,
+            diapers: scopedDiapers,
+            range,
+            childName,
+            childProfile
+        });
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${childName}-${range}-report.pdf"`);
@@ -679,8 +729,6 @@ router.post('/reports/generate', authMiddleware, async (req, res) => {
         drawActivitySummary(doc, summaryText);
         drawAtAGlance(doc, atAGlanceStats);
         const chartY = doc.y + 20;
-        const chartWidth = 160;
-        const chartHeight = 145;
 
         drawChartsPanel(doc, sleepChartData, feedingChartData, diaperSummary, range, chartStats, chartY);
 
@@ -693,4 +741,3 @@ router.post('/reports/generate', authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
-

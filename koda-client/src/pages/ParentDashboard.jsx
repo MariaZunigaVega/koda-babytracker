@@ -10,8 +10,7 @@ import NavIconButton from "../components/NavIconButton";
 
 const ParentDashboard = () => {
   const [activities, setActivities] = useState([]);
-  const [caregivers, setCaregivers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [caregivers] = useState([]);
 
   const [isActivitiesOpen, setIsActivitiesOpen] = useState(true);
   const [isCaregiversOpen, setIsCaregiversOpen] = useState(true);
@@ -21,8 +20,17 @@ const ParentDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const childName = selectedChild?.name || "Gracie";
-        const actRes = await axios.get(`${API_URL}/api/activities?childName=${encodeURIComponent(childName)}`);
+        const childId = selectedChild?._id;
+        const token = localStorage.getItem("token");
+        if (!childId || !token) {
+          setActivities([]);
+          return;
+        }
+
+        const actRes = await axios.get(`${API_URL}/api/activities`, {
+          params: { childId },
+          headers: { "x-auth-token": token },
+        });
 
         const { feedings = [], sleeps = [], diapers = [] } = actRes.data;
 
@@ -68,15 +76,13 @@ const ParentDashboard = () => {
           .sort((a, b) => new Date(b.rawTime) - new Date(a.rawTime));
 
         setActivities(recentActivities);
-        setLoading(false);
       } catch (err) {
         console.error("Link to backend failed:", err);
-        setLoading(false);
       }
     };
 
     fetchData();
-  }, [selectedChild?.name]);
+  }, [selectedChild?._id]);
 
   return (
     <div className="dashboard-container">

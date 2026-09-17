@@ -1,12 +1,19 @@
-//mdz0019
-
 const mongoose = require('mongoose');
 
 const SleepSchema = new mongoose.Schema({
-    childName: { type: String, required: true },
+    childId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Child', 
+        required: true 
+    },
+    loggedBy: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User', 
+        required: true 
+    },
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
-    duration: { type: Number, required: true }, 
+    duration: { type: Number, required: true }, // duration in minutes or hours
     type: { type: String, enum: ['Nap', 'Night'] },  
     quality: { type: String, enum: ['Good', 'Fair', 'Poor'] },  
     timestamp: { type: Date, default: Date.now }
