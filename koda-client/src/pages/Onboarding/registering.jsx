@@ -14,7 +14,6 @@ const Registering = () => {
     email: "",
     password: "",
     confirm: "",
-    code: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -45,12 +44,8 @@ const Registering = () => {
   const handleSubmit = async () => {
     const isPasswordValid = Object.values(passwordChecks).every(Boolean);
 
-    if (!form.username || !form.email || !form.password || !form.confirm || (isCaregiver && !form.code)) {
+    if (!form.username || !form.email || !form.password || !form.confirm) {
       setError("please fill in all fields.");
-      return;
-    }
-    if (isCaregiver && !/^\d{6}$/.test(form.code)) {
-      setError("please enter a valid 6 digit caregiver code.");
       return;
     }
     if (!isPasswordValid) {
@@ -72,7 +67,7 @@ const Registering = () => {
           username: form.username,
           email: form.email,
           password: form.password,
-          ...(isCaregiver && { role, code: form.code }),
+          ...(isCaregiver && { role }),
         }),
       });
 
@@ -121,24 +116,6 @@ const Registering = () => {
           <label>Email</label>
           <input type="email" placeholder="email@email.com" value={form.email} onChange={set("email")} />
         </div>
-
-        {isCaregiver && (
-          <div className="setup-field">
-            <label>Enter Code</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]{6}"
-              maxLength={6}
-              placeholder="enter 6 digit code"
-              value={form.code}
-              onChange={(e) => set("code")({
-                target: { value: e.target.value.replace(/\D/g, "") },
-              })}
-              required
-            />
-          </div>
-        )}
 
         {/* PASSWORD FIELD #1 */}
         <div className="setup-field">
