@@ -36,6 +36,12 @@ const UserSchema = new mongoose.Schema(
     resetPasswordExpires: { 
       type: Date 
     },
+    // 6-character code parents share with caregivers so they can request access.
+    linkCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
   },
   { timestamps: true }
 );

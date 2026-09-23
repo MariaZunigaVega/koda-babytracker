@@ -1,19 +1,16 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { ClipboardList, Users } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import "../styling/pages/parentDashboard.css";
 import { getSelectedChildForUser } from "../utils/authStorage";
 import { API_URL } from "../config";
 import ActivitiesModal from "../components/modals/ActivitiesModal";
-import CaregiversModal from "../components/modals/CaregiversModal";
 import NavIconButton from "../components/NavIconButton";
 
 const ParentDashboard = () => {
   const [activities, setActivities] = useState([]);
-  const [caregivers, setCaregivers] = useState([]);
 
   const [isActivitiesOpen, setIsActivitiesOpen] = useState(true);
-  const [isCaregiversOpen, setIsCaregiversOpen] = useState(true);
 
   const selectedChild = getSelectedChildForUser();
 
@@ -84,24 +81,6 @@ const ParentDashboard = () => {
     fetchData();
   }, [selectedChild?._id]);
 
-  const addCaregiver = async (email) => {
-    if (!selectedChild?._id) {
-      return { ok: false, message: "Create or select a child profile first." };
-    }
-
-    try {
-      const response = await axios.post(
-        `${API_URL}/api/children/${selectedChild._id}/caregivers`,
-        { email },
-        { headers: { "x-auth-token": localStorage.getItem("token") } },
-      );
-      setCaregivers(response.data.caregiverIds || []);
-      return { ok: true };
-    } catch (error) {
-      return { ok: false, message: error.response?.data?.msg || "Could not link that caregiver." };
-    }
-  };
-
   return (
     <div className="dashboard-container">
       <div className="hm-sticker-stack">
@@ -109,13 +88,6 @@ const ParentDashboard = () => {
           <ActivitiesModal
             activities={activities}
             onClose={() => setIsActivitiesOpen(false)}
-          />
-        )}
-        {isCaregiversOpen && (
-          <CaregiversModal
-            caregivers={caregivers}
-            onAddCaregiver={addCaregiver}
-            onClose={() => setIsCaregiversOpen(false)}
           />
         )}
       </div>
@@ -127,15 +99,6 @@ const ParentDashboard = () => {
           strokeWidth={2}
           onClick={() => setIsActivitiesOpen(true)}
           className="dashboard-corner-btn dashboard-corner-btn--activities"
-        />
-      )}
-      {!isCaregiversOpen && (
-        <NavIconButton
-          icon={Users}
-          size={20}
-          strokeWidth={2}
-          onClick={() => setIsCaregiversOpen(true)}
-          className="dashboard-corner-btn dashboard-corner-btn--caregivers"
         />
       )}
     </div>

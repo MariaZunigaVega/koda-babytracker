@@ -27,7 +27,7 @@ const findAuthorizedChild = (childId, userId) => Child.findOne({
     _id: childId,
     $or: [
         { userId },
-        { caregivers: userId }
+        { caregiverIds: userId }
     ]
 });
 
