@@ -84,6 +84,24 @@ const ParentDashboard = () => {
     fetchData();
   }, [selectedChild?._id]);
 
+  const addCaregiver = async (email) => {
+    if (!selectedChild?._id) {
+      return { ok: false, message: "Create or select a child profile first." };
+    }
+
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/children/${selectedChild._id}/caregivers`,
+        { email },
+        { headers: { "x-auth-token": localStorage.getItem("token") } },
+      );
+      setCaregivers(response.data.caregiverIds || []);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, message: error.response?.data?.msg || "Could not link that caregiver." };
+    }
+  };
+
   return (
     <div className="dashboard-container">
       <div className="hm-sticker-stack">
@@ -96,6 +114,7 @@ const ParentDashboard = () => {
         {isCaregiversOpen && (
           <CaregiversModal
             caregivers={caregivers}
+            onAddCaregiver={addCaregiver}
             onClose={() => setIsCaregiversOpen(false)}
           />
         )}
