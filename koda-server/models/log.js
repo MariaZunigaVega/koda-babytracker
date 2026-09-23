@@ -25,7 +25,7 @@ const logSchema = new mongoose.Schema({
     },
 
     context: {
-        type: String,
+        type: String, //Maybe modify to: type: mongoose.Schema.Types.Mixed,
         required: false,
     },
 
