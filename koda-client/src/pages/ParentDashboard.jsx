@@ -1,19 +1,16 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { ClipboardList, Users } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import "../styling/pages/parentDashboard.css";
 import { getSelectedChildForUser } from "../utils/authStorage";
 import { API_URL } from "../config";
 import ActivitiesModal from "../components/modals/ActivitiesModal";
-import CaregiversModal from "../components/modals/CaregiversModal";
 import NavIconButton from "../components/NavIconButton";
 
 const ParentDashboard = () => {
   const [activities, setActivities] = useState([]);
-  const [caregivers] = useState([]);
 
   const [isActivitiesOpen, setIsActivitiesOpen] = useState(true);
-  const [isCaregiversOpen, setIsCaregiversOpen] = useState(true);
 
   const selectedChild = getSelectedChildForUser();
 
@@ -93,12 +90,6 @@ const ParentDashboard = () => {
             onClose={() => setIsActivitiesOpen(false)}
           />
         )}
-        {isCaregiversOpen && (
-          <CaregiversModal
-            caregivers={caregivers}
-            onClose={() => setIsCaregiversOpen(false)}
-          />
-        )}
       </div>
 
       {!isActivitiesOpen && (
@@ -108,15 +99,6 @@ const ParentDashboard = () => {
           strokeWidth={2}
           onClick={() => setIsActivitiesOpen(true)}
           className="dashboard-corner-btn dashboard-corner-btn--activities"
-        />
-      )}
-      {!isCaregiversOpen && (
-        <NavIconButton
-          icon={Users}
-          size={20}
-          strokeWidth={2}
-          onClick={() => setIsCaregiversOpen(true)}
-          className="dashboard-corner-btn dashboard-corner-btn--caregivers"
         />
       )}
     </div>

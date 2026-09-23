@@ -12,6 +12,8 @@ import '../styling/pages/accountSettings.css';
 import { API_URL } from '../config';
 import Layout from '../components/Layout';
 import { getSelectedChildForUser } from '../utils/authStorage';
+import CaregiverLinkPanel from '../components/settings/CaregiverLinkPanel';
+import CaregiverManagementPanel from '../components/settings/CaregiverManagementPanel';
 
 const CollapseRow = ({ open, children, topGap = false }) => (
   <div
@@ -27,6 +29,7 @@ const AccountSettings = () => {
   const navigate = useNavigate();
   const email = localStorage.getItem('email') || '';
   const [selectedChild, setSelectedChild] = useState(null);
+  const [role, setRole] = useState(null);
 
   const [category, setCategory] = useState(null);
 
@@ -47,10 +50,7 @@ const AccountSettings = () => {
     })
       .then((response) => (response.ok ? response.json() : null))
       .then((user) => {
-        if (user?.role === 'caregiver') {
-          navigate('/ParentDashboard', { replace: true });
-          return;
-        }
+        setRole(user?.role || 'parent');
         setAccessChecked(true);
       })
       .catch(() => setAccessChecked(true));
@@ -58,11 +58,12 @@ const AccountSettings = () => {
 
   if (!accessChecked) return null;
 
+  const isCaregiver = role === 'caregiver';
   const childName = selectedChild?.name || 'Gracie';
 
   const panelTitles = {
     account: 'account settings',
-    caretaker: 'caretaker settings',
+    caretaker: isCaregiver ? 'link to a parent' : 'caretaker settings',
     baby: `${childName}'s settings`,
   };
 
@@ -223,9 +224,7 @@ const AccountSettings = () => {
                     <span>{panelTitles.caretaker}</span>
                   </div>
 
-                  <p className="empty-msg-light account-empty-msg--panel">
-                    caretaker settings are coming soon.
-                  </p>
+                  {isCaregiver ? <CaregiverLinkPanel /> : <CaregiverManagementPanel />}
 
                   <button type="button" className="account-toggle-link account-toggle-link--bottom" onClick={closeCategory}>
                     show less
@@ -234,41 +233,43 @@ const AccountSettings = () => {
               ) : (
                 <button type="button" className="glass-card save-btn-card" onClick={() => openCategory('caretaker')}>
                   <Users size={20} />
-                  <span>caretaker settings</span>
+                  <span>{panelTitles.caretaker}</span>
                 </button>
               )}
             </CollapseRow>
 
-            <CollapseRow open={category === null || category === 'baby'}>
-              {category === 'baby' ? (
-                <div className="glass-card account-expanded-card">
-                  <div className="card-header account-card-header--flush">
-                    {panelIcons.baby}
-                    <span>{panelTitles.baby}</span>
-                  </div>
+            {!isCaregiver && (
+              <CollapseRow open={category === null || category === 'baby'}>
+                {category === 'baby' ? (
+                  <div className="glass-card account-expanded-card">
+                    <div className="card-header account-card-header--flush">
+                      {panelIcons.baby}
+                      <span>{panelTitles.baby}</span>
+                    </div>
 
-                  <div className="account-baby-panel-body">
-                    <button
-                      type="button"
-                      className="glass-card save-btn-card"
-                      onClick={() => navigate('/babysettings')}
-                    >
-                      <Baby size={20} />
-                      <span>go to {childName}'s settings</span>
+                    <div className="account-baby-panel-body">
+                      <button
+                        type="button"
+                        className="glass-card save-btn-card"
+                        onClick={() => navigate('/babysettings')}
+                      >
+                        <Baby size={20} />
+                        <span>go to {childName}'s settings</span>
+                      </button>
+                    </div>
+
+                    <button type="button" className="account-toggle-link account-toggle-link--bottom" onClick={closeCategory}>
+                      show less
                     </button>
                   </div>
-
-                  <button type="button" className="account-toggle-link account-toggle-link--bottom" onClick={closeCategory}>
-                    show less
+                ) : (
+                  <button type="button" className="glass-card save-btn-card" onClick={() => openCategory('baby')}>
+                    <Baby size={20} />
+                    <span>{childName}'s settings</span>
                   </button>
-                </div>
-              ) : (
-                <button type="button" className="glass-card save-btn-card" onClick={() => openCategory('baby')}>
-                  <Baby size={20} />
-                  <span>{childName}'s settings</span>
-                </button>
-              )}
-            </CollapseRow>
+                )}
+              </CollapseRow>
+            )}
 
           </div>
         </div>

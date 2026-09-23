@@ -45,7 +45,11 @@ router.post("/", authMiddleware, async (req, res) => {
 // Get all child profiles for logged-in user
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const children = await Child.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    const children = await Child.find({
+      $or: [{ userId: req.user.id }, { caregiverIds: req.user.id }],
+    })
+      .populate("caregiverIds", "username email role")
+      .sort({ createdAt: -1 });
     res.json(children);
   } catch (err) {
     console.error(err);

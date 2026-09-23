@@ -292,3 +292,60 @@
     top: 300px;
   }
 }
+
+.hm-caregiver-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.hm-caregiver-form label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 16px;
+}
+
+.hm-caregiver-form input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid rgba(70, 105, 75, 0.45);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #2e4d35;
+  font: 16px "Londrina Solid", cursive;
+}
+
+.hm-form-status {
+  margin: 0;
+  color: #8a4038;
+  font-size: 15px;
+}
+
+.hm-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.hm-secondary-btn,
+.hm-submit-btn {
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.hm-secondary-btn {
+  border: 1px solid rgba(70, 105, 75, 0.35);
+  background: rgba(255, 255, 255, 0.55);
+  color: #416149;
+}
+
+.hm-submit-btn {
+  border: 1px solid #315b3d;
+  background: #315b3d;
+  color: #fff;
+}
