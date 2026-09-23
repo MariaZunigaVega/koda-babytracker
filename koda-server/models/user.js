@@ -6,6 +6,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
     password: {
       type: String,
@@ -15,12 +16,20 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      lowercase: true,
+      trim: true,
     },
     role: {
       type: String,
       enum: ["parent", "caregiver"],
       default: "parent",
     },
+    children: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Child",
+      },
+    ],
     resetPasswordToken: { 
       type: String 
     },
@@ -28,7 +37,7 @@ const UserSchema = new mongoose.Schema(
       type: Date 
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 module.exports = mongoose.model("User", UserSchema);

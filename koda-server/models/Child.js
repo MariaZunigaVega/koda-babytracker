@@ -7,6 +7,12 @@ const ChildSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    caregivers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     name: {
       type: String,
       required: true,

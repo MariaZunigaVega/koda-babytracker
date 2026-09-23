@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-import { ChevronDown, X, Save, Milk, Moon, Baby, Puzzle, Smile, ChevronRight, Clock, Calendar } from 'lucide-react';
+import { Save, Milk, Moon, Baby, Clock, Calendar, AlertTriangle } from 'lucide-react';
 import '../styling/global/App.css';
 import '../styling/pages/activities.css';
 
@@ -48,6 +48,8 @@ const Activities = () => {
   const [scheduleTime, setScheduleTime] = useState('');
   const [repeatDays, setRepeatDays] = useState([]);
 
+  const [sleepError, setSleepError] = useState('');
+
   const toggleRepeatDay = (day) => {
     setRepeatDays((prev) =>
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
@@ -85,46 +87,58 @@ const Activities = () => {
     e.preventDefault();
 
     try {
-      const childName = getSelectedChildForUser()?.name || "Gracie";
+      const selectedChild = getSelectedChildForUser();
+      const childId = selectedChild?._id;
+      const token = localStorage.getItem('token');
+
+      if (!childId || !token) {
+        throw new Error('A selected child and authenticated user are required.');
+      }
+
+      const requestConfig = { headers: { 'x-auth-token': token } };
 
       if (mode === 'schedule') {
         await axios.post(`${API_URL}/api/schedule`, {
-          childName,
+          childId,
           activityType: type,
           repeat,
           time: scheduleTime,
           ...(repeat === 'once' ? { date: scheduleDate } : {}),
           ...(repeat === 'weekly' ? { daysOfWeek: repeatDays } : {}),
           details: buildActivityDetails(),
-        });
+        }, requestConfig);
       } else if (type === 'sleep') {
         const today = new Date().toISOString().split('T')[0];
         const sleepStart = new Date(`${today}T${startTime}`);
         const sleepEnd = new Date(`${today}T${endTime}`);
+        if (startTime === endTime) {
+          setSleepError('Start time and end time cannot be the same.');
+          return;
+        }
+
+        setSleepError('');
+
         const duration = Math.round((sleepEnd - sleepStart) / (1000 * 60));
 
         await axios.post(`${API_URL}/api/sleep`, {
-          childName,
+          childId,
           startTime: sleepStart,
           endTime: sleepEnd,
           duration,
           quality,
-          timestamp: new Date(),
-        });
+        }, requestConfig);
       } else if (type === 'feeding') {
         await axios.post(`${API_URL}/api/feeding`, {
-          childName,
+          childId,
           type: feedingType,
           amount: feedingAmount ? Number(feedingAmount) : undefined,
           side: feedingSide || 'N/A',
-          timestamp: new Date(),
-        });
+        }, requestConfig);
       } else if (type === 'diaper') {
         await axios.post(`${API_URL}/api/diaper`, {
-          childName,
+          childId,
           type: diaperType,
-          timestamp: new Date(),
-        });
+        }, requestConfig);
       }
 
       navigate('/ParentDashboard');
@@ -217,7 +231,10 @@ const Activities = () => {
                         <input
                           type="time"
                           value={startTime}
-                          onChange={(e) => setStartTime(e.target.value)}
+                          onChange={(e) => {
+                            setStartTime(e.target.value);
+                            setSleepError('');
+                          }}
                           className="log-input"
                           required
                         />
@@ -230,13 +247,21 @@ const Activities = () => {
                         <input
                           type="time"
                           value={endTime}
-                          onChange={(e) => setEndTime(e.target.value)}
+                          onChange={(e) => {
+                            setEndTime(e.target.value);
+                            setSleepError('');
+                          }}
                           className="log-input"
                           required
                         />
                       </div>
                     </div>
-
+                    {sleepError && (
+                      <div className="sleep-warning" role="alert">
+                        <AlertTriangle size={18} />
+                        <span>{sleepError}</span>
+                      </div>
+                    )}
                     <div className="log-field-group">
                       <label className="log-label">quality</label>
                       <div className="log-option-row">
