@@ -49,6 +49,8 @@ const Activities = () => {
   const [repeatDays, setRepeatDays] = useState([]);
 
   const [sleepError, setSleepError] = useState('');
+  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const toggleRepeatDay = (day) => {
     setRepeatDays((prev) =>
@@ -85,6 +87,7 @@ const Activities = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError('');
 
     try {
       const selectedChild = getSelectedChildForUser();
@@ -92,9 +95,11 @@ const Activities = () => {
       const token = localStorage.getItem('token');
 
       if (!childId || !token) {
-        throw new Error('A selected child and authenticated user are required.');
+        setSubmitError('no child profile is selected. pick one in settings before logging.');
+        return;
       }
 
+      setSubmitting(true);
       const requestConfig = { headers: { 'x-auth-token': token } };
 
       if (mode === 'schedule') {
@@ -144,6 +149,9 @@ const Activities = () => {
       navigate('/ParentDashboard');
     } catch (err) {
       console.error("Error saving activity:", err);
+      setSubmitError(err.response?.data?.error || err.response?.data?.msg || err.message || 'could not save that activity. please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -455,9 +463,16 @@ const Activities = () => {
                 )}
               </div>
 
-              <button type="submit" className="glass-card save-btn-card save-btn-card--activities">
+              {submitError && (
+                <div className="sleep-warning" role="alert">
+                  <AlertTriangle size={18} />
+                  <span>{submitError}</span>
+                </div>
+              )}
+
+              <button type="submit" className="glass-card save-btn-card save-btn-card--activities" disabled={submitting}>
                 <Save size={20} />
-                <span>{mode === 'schedule' ? 'save schedule' : 'save entry'}</span>
+                <span>{submitting ? 'saving…' : (mode === 'schedule' ? 'save schedule' : 'save entry')}</span>
               </button>
 
               <button type="button" className="activities-cancel-btn" onClick={handleBack}>
