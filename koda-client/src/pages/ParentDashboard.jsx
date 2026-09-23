@@ -23,6 +23,12 @@ const ParentDashboard = () => {
       try {
         const childName = selectedChild?.name || "Gracie";
         const actRes = await axios.get(`${API_URL}/api/activities?childName=${encodeURIComponent(childName)}`);
+        const token = localStorage.getItem("token");
+        const childrenRes = await axios.get(`${API_URL}/api/children`, {
+          headers: { "x-auth-token": token },
+        });
+        const currentChild = childrenRes.data.find((child) => child._id === selectedChild?._id);
+        setCaregivers(currentChild?.caregiverIds || []);
 
         const { feedings = [], sleeps = [], diapers = [] } = actRes.data;
 
@@ -78,6 +84,24 @@ const ParentDashboard = () => {
     fetchData();
   }, [selectedChild?.name]);
 
+  const addCaregiver = async (email) => {
+    if (!selectedChild?._id) {
+      return { ok: false, message: "Create or select a child profile first." };
+    }
+
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/children/${selectedChild._id}/caregivers`,
+        { email },
+        { headers: { "x-auth-token": localStorage.getItem("token") } },
+      );
+      setCaregivers(response.data.caregiverIds || []);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, message: error.response?.data?.msg || "Could not link that caregiver." };
+    }
+  };
+
   return (
     <div className="dashboard-container">
       <div className="hm-sticker-stack">
@@ -90,6 +114,7 @@ const ParentDashboard = () => {
         {isCaregiversOpen && (
           <CaregiversModal
             caregivers={caregivers}
+            onAddCaregiver={addCaregiver}
             onClose={() => setIsCaregiversOpen(false)}
           />
         )}
